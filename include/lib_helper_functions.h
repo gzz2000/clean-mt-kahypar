@@ -71,6 +71,7 @@ namespace lib {
 
 void initialize(const size_t num_threads, const bool interleaved_allocations, const bool print_warnings) {
   size_t P = num_threads;
+  (void)print_warnings;  // avoid warning without hwloc
   #ifndef KAHYPAR_DISABLE_HWLOC
     size_t num_available_cpus = HardwareTopology::instance().num_cpus();
     if ( num_available_cpus < num_threads ) {

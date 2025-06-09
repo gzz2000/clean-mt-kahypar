@@ -76,6 +76,7 @@ void testFeistel() {
     uint64_t encrypted = feistel.encrypt(plain_text);
     uint64_t decrypted = feistel.decrypt(encrypted);
     assert(decrypted == plain_text);
+    (void)decrypted; // avoid warning in release
   };
 
   t(420);

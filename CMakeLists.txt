@@ -12,6 +12,7 @@ project(MtKaHyPar
         LANGUAGES CXX C)
 set(PROJECT_URL "https://github.com/kahypar/mt-kahypar")
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #################################################################
 ## Sanity checks and policies                                  ##
@@ -50,6 +51,8 @@ endif()
 # meta targets for flags
 add_library(MtKaHyPar-BuildFlags INTERFACE)
 target_compile_features(MtKaHyPar-BuildFlags INTERFACE cxx_std_17)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # meta targets for includes and source files
 add_library(MtKaHyPar-Include INTERFACE)
