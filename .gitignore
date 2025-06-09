@@ -16,7 +16,7 @@ build_numa/*
 build_nlevel/*
 build_interleaved/*
 rel2/
-external_tools/*
+# external_tools/*
 relwithdebinfo/*
 release127/*
 release128/*
@@ -33,7 +33,7 @@ debug2/*
 tuning/*
 debug152/*
 profile/*
-external_tools/*
+# external_tools/*
 .vscode/*
 example_1
 example_2

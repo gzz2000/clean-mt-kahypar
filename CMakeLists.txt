@@ -263,29 +263,29 @@ set(KAHYPAR_PYBIND11_VERSION     v2.13.6)
 message(STATUS "Fetching dependencies...")
 
 # Include header-only dependencies
-FetchContent_Populate(
-  kahypar-shared-resources QUIET EXLUDE_FROM_ALL
-  GIT_REPOSITORY https://github.com/kahypar/kahypar-shared-resources.git
-  GIT_TAG        ${KAHYPAR_SHARED_RESOURCES_TAG}
-  SOURCE_DIR     external_tools/kahypar-shared-resources
-)
-FetchContent_Populate(
-  WHFC QUIET EXLUDE_FROM_ALL
-  GIT_REPOSITORY https://github.com/larsgottesbueren/WHFC.git
-  GIT_TAG        ${KAHYPAR_WHFC_TAG}
-  SOURCE_DIR     external_tools/WHFC
-)
-FetchContent_Populate(
-  growt QUIET EXLUDE_FROM_ALL
-  GIT_REPOSITORY https://github.com/TooBiased/growt.git
-  GIT_TAG        ${KAHYPAR_GROWT_TAG}
-  SOURCE_DIR     external_tools/growt
-)
+# FetchContent_Populate(
+#   kahypar-shared-resources QUIET EXLUDE_FROM_ALL
+#   GIT_REPOSITORY https://github.com/kahypar/kahypar-shared-resources.git
+#   GIT_TAG        ${KAHYPAR_SHARED_RESOURCES_TAG}
+#   SOURCE_DIR     external_tools/kahypar-shared-resources
+# )
+# FetchContent_Populate(
+#   WHFC QUIET EXLUDE_FROM_ALL
+#   GIT_REPOSITORY https://github.com/larsgottesbueren/WHFC.git
+#   GIT_TAG        ${KAHYPAR_WHFC_TAG}
+#   SOURCE_DIR     external_tools/WHFC
+# )
+# FetchContent_Populate(
+#   growt QUIET EXLUDE_FROM_ALL
+#   GIT_REPOSITORY https://github.com/TooBiased/growt.git
+#   GIT_TAG        ${KAHYPAR_GROWT_TAG}
+#   SOURCE_DIR     external_tools/growt
+# )
 
 target_include_directories(MtKaHyPar-Include INTERFACE
-                           ${CMAKE_CURRENT_BINARY_DIR}/external_tools/kahypar-shared-resources
-                           ${CMAKE_CURRENT_BINARY_DIR}/external_tools/growt
-                           ${CMAKE_CURRENT_BINARY_DIR}/external_tools/WHFC)
+                           ${CMAKE_CURRENT_SOURCE_DIR}/external_tools/kahypar-shared-resources
+                           ${CMAKE_CURRENT_SOURCE_DIR}/external_tools/growt
+                           ${CMAKE_CURRENT_SOURCE_DIR}/external_tools/WHFC)
 
 
 if (KAHYPAR_ENABLE_TESTING)

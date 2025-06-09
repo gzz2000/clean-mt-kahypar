@@ -1,0 +1,40 @@
+* Tasks
+
+** TODO setData does not exist update does not exist either
+   [2021-02-05 Fr 16:21]
+   [[file:~/IMP/growt/data-structures/base_linear_iterator.hpp::{%20_ptr->setData(value);%20}]]
+
+** TODO the complex slots fingerprint is bad when doing circular mapping
+   [2021-02-04 Do 18:59]
+   [[file:~/IMP/growt/data-structures/element_types/complex_slot.hpp][file:~/IMP/growt/data-structures/element_types/complex_slot.hpp]]
+
+** TODO make a find script for the utils library this would produce an error if git submodule update was not called
+   [2021-02-03 Mi 15:14]
+   [[file:~/IMP/growt/data-structures/element_types/simple_slot.hpp::\//%20***%20SFINAE%20based%20helper%20for%20atomic%20updates%20**********************************]]
+
+** TODO construct all tables with some kind of table config stuff
+   [2020-10-15 Do 01:23]
+   [[file:~/IMP/growt/data-structures/base_linear.hpp::using%20needs_referential_integrity%20=%20int;]]
+
+** TODO if slots need cleanup, do that in base table destructor but only if the element is not marked
+   [2020-10-15 Do 01:01]
+   [[file:~/IMP/growt/data-structures/base_linear.hpp::class%20A%20=%20std::allocator<typename%20E::atomic_slot_type>>]]
+   for non-marking tables, we could still do something in the
+   atomic_mark routine, that tells them not to cleanup (i.e. remove ptr?)
+
+** TODO use improved allocators with per thread free lists
+   [2020-10-14 Mi 19:08]
+   [[file:~/IMP/growt/data-structures/element_types/complex_slot.hpp::static%20value_type*%20allocate()]]
+
+** TODO change update and delete capabilities
+   [2020-10-08 Thu 13:14]
+   [[file:~/IMP/growt/data-structures/element_types/complex_element.hpp::bool%20atomic_delete(const%20complex_element%20&%20expected);]]
+for now I removed update and delete from the new complex data types
+
+** TODO we have to pass the hash value to the comparison for fingerprints
+   [2020-10-08 Thu 13:13]
+   [[file:~/IMP/growt/data-structures/element_types/complex_element.hpp::bool%20compare_key(const%20key_type%20&%20k)%20const;]]
+
+** TODO
+   [2020-10-08 Thu 13:12]
+   [[file:~/IMP/growt/data-structures/element_types/markableelement.h::static%20constexpr%20unsigned%20long%20long%20MARKED_BIT%20=%201ull%20<<%2063;]]
