@@ -1,7 +1,7 @@
 #pragma once
 
-#include <boost/range/adaptor/reversed.hpp>
-#include <boost/range/numeric.hpp>
+#include <boost_kahypar/range/adaptor/reversed.hpp>
+#include <boost_kahypar/range/numeric.hpp>
 #include <cstdint>
 
 class IteratorChecks {

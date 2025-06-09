@@ -24,7 +24,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <boost/program_options.hpp>
+#include <boost_kahypar/program_options.hpp>
 
 #include <fstream>
 #include <iostream>
@@ -37,7 +37,7 @@
 #include "mt-kahypar/io/hypergraph_io.h"
 
 using namespace mt_kahypar;
-namespace po = boost::program_options;
+namespace po = boost_kahypar::program_options;
 
 int main(int argc, char* argv[]) {
   std::string graph_filename;

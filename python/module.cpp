@@ -29,7 +29,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/functional.h>
 
-#include <boost/range/irange.hpp>
+#include <boost_kahypar/range/irange.hpp>
 
 #include <tbb/parallel_for.h>
 
@@ -611,8 +611,8 @@ Construct a partitioned hypergraph from this hypergraph.
       [&](mt_kahypar_partitioned_hypergraph_t p) {
         return lib::switch_phg<py::iterator, true>(p, [=](const auto& phg) {
           return py::make_iterator(
-            boost::range_detail::integer_iterator<PartitionID>(0),
-            boost::range_detail::integer_iterator<PartitionID>(phg.k()));
+            boost_kahypar::range_detail::integer_iterator<PartitionID>(0),
+            boost_kahypar::range_detail::integer_iterator<PartitionID>(phg.k()));
         });
       }, "Iterator over blocks of the partition", py::keep_alive<0, 1>())
     .def("is_fixed",

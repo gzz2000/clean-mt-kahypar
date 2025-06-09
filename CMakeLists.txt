@@ -35,9 +35,6 @@ endif()
 if (POLICY CMP0144)  # uppercase find_package variables
   cmake_policy(SET CMP0144 NEW)
 endif()
-if (POLICY CMP0167)  # new FindBoost behavior
-  cmake_policy(SET CMP0167 NEW)
-endif()
 
 if (NOT DEFINED BUILD_SHARED_LIBS AND NOT WIN32)
   # since TBB does not support static linking, we build with dynamic linking by default (except on Windows)
@@ -93,7 +90,6 @@ option(KAHYPAR_INSTALL_CLI "Provide a target to install an executable binary `mt
 option(KAHYPAR_BUILD_DEBIAN_PACKAGE "Provide a target to build a debian package." OFF)
 
 # dependencies
-option(KAHYPAR_DOWNLOAD_BOOST "Download boost automatically and compile required libraries." OFF)
 option(KAHYPAR_DOWNLOAD_TBB "Download TBB automatically." OFF)
 option(KAHYPAR_DISABLE_HWLOC "Exclude components requiring hwloc. Might impact performance on NUMA platforms." OFF)
 
@@ -263,28 +259,6 @@ set(KAHYPAR_TBB_VERSION          v2022.0.0)
 set(KAHYPAR_GOOGLETEST_VERSION   v1.15.2)
 set(KAHYPAR_PYBIND11_VERSION     v2.13.6)
 
-message(STATUS "Fetching dependencies...")
-
-# Include header-only dependencies
-# FetchContent_Populate(
-#   kahypar-shared-resources QUIET EXLUDE_FROM_ALL
-#   GIT_REPOSITORY https://github.com/kahypar/kahypar-shared-resources.git
-#   GIT_TAG        ${KAHYPAR_SHARED_RESOURCES_TAG}
-#   SOURCE_DIR     external_tools/kahypar-shared-resources
-# )
-# FetchContent_Populate(
-#   WHFC QUIET EXLUDE_FROM_ALL
-#   GIT_REPOSITORY https://github.com/larsgottesbueren/WHFC.git
-#   GIT_TAG        ${KAHYPAR_WHFC_TAG}
-#   SOURCE_DIR     external_tools/WHFC
-# )
-# FetchContent_Populate(
-#   growt QUIET EXLUDE_FROM_ALL
-#   GIT_REPOSITORY https://github.com/TooBiased/growt.git
-#   GIT_TAG        ${KAHYPAR_GROWT_TAG}
-#   SOURCE_DIR     external_tools/growt
-# )
-
 target_include_directories(MtKaHyPar-Include INTERFACE
                            ${CMAKE_CURRENT_SOURCE_DIR}/external_tools/kahypar-shared-resources
                            ${CMAKE_CURRENT_SOURCE_DIR}/external_tools/growt
@@ -292,6 +266,8 @@ target_include_directories(MtKaHyPar-Include INTERFACE
 
 
 if (KAHYPAR_ENABLE_TESTING)
+  message(STATUS "Fetching test dependencies...")
+
   FetchContent_Declare(
     googletest EXCLUDE_FROM_ALL SYSTEM
     GIT_REPOSITORY https://github.com/google/googletest.git
@@ -305,46 +281,37 @@ if (KAHYPAR_ENABLE_TESTING)
   target_link_libraries(MtKaHyPar-Test INTERFACE gmock gtest gtest_main)
 endif()
 
-# check for linking problems
-if(BUILD_SHARED_LIBS AND KAHYPAR_STATIC_LINK_DEPENDENCIES)
-  if(NOT KAHYPAR_DOWNLOAD_BOOST OR NOT CMAKE_POSITION_INDEPENDENT_CODE)
-    message(WARNING "Building a shared lib with static linking of transitive dependencies requires building Boost from source with -DCMAKE_POSITION_INDEPENDENT_CODE=On")
-  endif()
-endif()
-
-# define required boost libraries
-set(BOOST_INCLUDE_LIBRARIES program_options range dynamic_bitset lexical_cast)
-
 if(KAHYPAR_STATIC_LINK_DEPENDENCIES)
-  set(Boost_USE_STATIC_LIBS ON)
   set(BUILD_SHARED_LIBS OFF)
 endif()
-if(KAHYPAR_DOWNLOAD_BOOST)
-  # Download Boost
-  set(BOOST_ENABLE_CMAKE ON)
-  FetchContent_Declare(
-    Boost EXCLUDE_FROM_ALL SYSTEM
-    URL https://github.com/boostorg/boost/releases/download/boost-1.86.0/boost-1.86.0-cmake.tar.gz
-    )
-  FetchContent_MakeAvailable(Boost)
-else()
-  # Find system Boost
-  find_package(Boost 1.69 REQUIRED COMPONENTS program_options)
-  if(NOT Boost_FOUND)
-    message(FATAL_ERROR "
-        Boost not found. Install Boost on your system or
-        add -DKAHYPAR_DOWNLOAD_BOOST=On to the cmake build command.")
-  endif()
-  message(STATUS "Boost Include: ${Boost_INCLUDE_DIRS}, Boost Library: ${Boost_LIBRARY_DIRS}")
-endif()
+# if(KAHYPAR_DOWNLOAD_BOOST)
+#   # Download Boost
+#   set(BOOST_ENABLE_CMAKE ON)
+#   FetchContent_Declare(
+#     Boost EXCLUDE_FROM_ALL SYSTEM
+#     URL https://github.com/boostorg/boost/releases/download/boost-1.86.0/boost-1.86.0-cmake.tar.gz
+#     )
+#   FetchContent_MakeAvailable(Boost)
+# else()
+#   # Find system Boost
+#   find_package(Boost 1.69 REQUIRED COMPONENTS program_options)
+#   if(NOT Boost_FOUND)
+#     message(FATAL_ERROR "
+#         Boost not found. Install Boost on your system or
+#         add -DKAHYPAR_DOWNLOAD_BOOST=On to the cmake build command.")
+#   endif()
+#   message(STATUS "Boost Include: ${Boost_INCLUDE_DIRS}, Boost Library: ${Boost_LIBRARY_DIRS}")
+# endif()
 
-# newer boost versions require to add all targets explicitly
-foreach(BOOST_TARGET ${BOOST_INCLUDE_LIBRARIES})
-  if(TARGET Boost::${BOOST_TARGET})
-    target_link_libraries(MtKaHyPar-Include INTERFACE Boost::${BOOST_TARGET})
-  endif()
-endforeach()
+# # newer boost versions require to add all targets explicitly
+# foreach(BOOST_TARGET ${BOOST_INCLUDE_LIBRARIES})
+#   if(TARGET Boost::${BOOST_TARGET})
+#     target_link_libraries(MtKaHyPar-Include INTERFACE Boost::${BOOST_TARGET})
+#   endif()
+# endforeach()
 
+add_subdirectory(external_tools/boost_kahypar)
+target_link_libraries(MtKaHyPar-Include INTERFACE BoostKaHyPar)
 
 if(KAHYPAR_DOWNLOAD_TBB)
   # Download TBB library

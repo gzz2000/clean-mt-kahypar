@@ -29,7 +29,7 @@
 
 #include <functional>
 #include <cmath>
-#include <boost/range/irange.hpp>
+#include <boost_kahypar/range/irange.hpp>
 
 #include "mt-kahypar/datastructures/array.h"
 #include "mt-kahypar/datastructures/hypergraph_common.h"
@@ -86,7 +86,7 @@ class Graph {
 
   // ! Iterator over all nodes of the graph
   auto nodes() const {
-    return boost::irange<NodeID>(0, static_cast<NodeID>(numNodes()));
+    return boost_kahypar::irange<NodeID>(0, static_cast<NodeID>(numNodes()));
   }
 
   // ! Iterator over all adjacent vertices of u

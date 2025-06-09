@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include <boost/range/irange.hpp>
+#include <boost_kahypar/range/irange.hpp>
 
 #include <tbb/parallel_for.h>
 
@@ -446,11 +446,11 @@ class StaticGraph {
   // ! Iterator to iterate over the hypernodes
   using HypernodeIterator = NodeIterator;
   // ! Iterator to iterate over the hyperedges
-  using HyperedgeIterator = boost::range_detail::integer_iterator<HyperedgeID>;
+  using HyperedgeIterator = boost_kahypar::range_detail::integer_iterator<HyperedgeID>;
   // ! Iterator to iterate over the pins of a hyperedge
   using IncidenceIterator = PinIterator;
   // ! Iterator to iterate over the incident nets of a hypernode
-  using IncidentNetsIterator = boost::range_detail::integer_iterator<HyperedgeID>;
+  using IncidentNetsIterator = boost_kahypar::range_detail::integer_iterator<HyperedgeID>;
 
   // ! static graph does not support explicit parallel edge detection
   struct ParallelHyperedge {
@@ -590,8 +590,8 @@ class StaticGraph {
   // ! Returns a range of the active edges of the hypergraph
   IteratorRange<HyperedgeIterator> edges() const {
     return IteratorRange<HyperedgeIterator>(
-      boost::range_detail::integer_iterator<HyperedgeID>(0),
-      boost::range_detail::integer_iterator<HyperedgeID>(_num_edges));
+      boost_kahypar::range_detail::integer_iterator<HyperedgeID>(0),
+      boost_kahypar::range_detail::integer_iterator<HyperedgeID>(_num_edges));
   }
 
   // ! Returns a range to loop over the incident nets of hypernode u.
@@ -906,8 +906,8 @@ class StaticGraph {
   MT_KAHYPAR_ATTRIBUTE_ALWAYS_INLINE IteratorRange<IncidentNetsIterator> incident_nets_of(const HypernodeID u,
                                                                                           const size_t pos = 0) const {
     return IteratorRange<IncidentNetsIterator>(
-      boost::range_detail::integer_iterator<HyperedgeID>(node(u).firstEntry() + pos),
-      boost::range_detail::integer_iterator<HyperedgeID>(node(u + 1).firstEntry()));
+      boost_kahypar::range_detail::integer_iterator<HyperedgeID>(node(u).firstEntry() + pos),
+      boost_kahypar::range_detail::integer_iterator<HyperedgeID>(node(u + 1).firstEntry()));
   }
 
   // ####################### Hyperedge Information #######################

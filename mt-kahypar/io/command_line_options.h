@@ -29,19 +29,19 @@
 
 #include <string>
 
-#include <boost/program_options.hpp>
+#include <boost_kahypar/program_options.hpp>
 
 #include "mt-kahypar/partition/context.h"
 
 namespace mt_kahypar {
 
-using option = boost::program_options::basic_option<char>;
+using option = boost_kahypar::program_options::basic_option<char>;
 
 void processCommandLineInput(Context& context, int argc, char *argv[], const std::vector<option>* preset_option_list);
 void parseIniToContext(Context& context, const std::string& ini_filename, bool disable_verbose_output = false);
 void presetToContext(Context& context, std::vector<option>& option_list, bool disable_verbose_output = false);
 
 // for testing
-boost::program_options::options_description getIniOptionsDescription(Context& context);
+boost_kahypar::program_options::options_description getIniOptionsDescription(Context& context);
 
 } // namespace mt_kahypar

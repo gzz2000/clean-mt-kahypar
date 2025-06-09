@@ -39,7 +39,7 @@
 
 #include "mt-kahypar/utils/exception.h"
 
-namespace po = boost::program_options;
+namespace po = boost_kahypar::program_options;
 
 namespace mt_kahypar {
   namespace platform {

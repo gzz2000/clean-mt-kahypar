@@ -24,7 +24,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <boost/program_options.hpp>
+#include <boost_kahypar/program_options.hpp>
 
 #include <fstream>
 #include <iostream>
@@ -34,7 +34,7 @@
 #include "mt-kahypar/datastructures/hypergraph_common.h"
 #include "mt-kahypar/utils/randomize.h"
 
-namespace po = boost::program_options;
+namespace po = boost_kahypar::program_options;
 using namespace mt_kahypar;
 
 int main(int argc, char* argv[]) {

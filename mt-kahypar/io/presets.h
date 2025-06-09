@@ -28,11 +28,11 @@
 
 #include <vector>
 
-#include <boost/program_options.hpp>
+#include <boost_kahypar/program_options.hpp>
 
 #include "mt-kahypar/partition/context_enum_classes.h"
 
-namespace po = boost::program_options;
+namespace po = boost_kahypar::program_options;
 using option = po::basic_option<char>;
 
 namespace mt_kahypar {

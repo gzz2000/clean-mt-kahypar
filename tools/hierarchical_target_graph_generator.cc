@@ -24,7 +24,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-#include <boost/program_options.hpp>
+#include <boost_kahypar/program_options.hpp>
 
 #include <fstream>
 #include <iostream>
@@ -36,7 +36,7 @@
 #include "mt-kahypar/utils/randomize.h"
 
 using namespace mt_kahypar;
-namespace po = boost::program_options;
+namespace po = boost_kahypar::program_options;
 
 using AdjList = std::vector<std::vector<std::pair<HypernodeID, HyperedgeWeight>>>;
 

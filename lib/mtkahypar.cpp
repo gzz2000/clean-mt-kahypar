@@ -29,7 +29,7 @@
 #include <cstring>
 #include <type_traits>
 #include <charconv>
-#include <boost/lexical_cast.hpp>
+#include <boost_kahypar/lexical_cast.hpp>
 
 #include "include/mtkahypar.h"
 #include "include/mtkahypartypes.h"
@@ -178,9 +178,9 @@ mt_kahypar_status_t mt_kahypar_set_context_parameter(mt_kahypar_context_t* conte
     }
     case VERBOSE:
       try {
-        c.partition.verbose_output = boost::lexical_cast<bool>(value);
+        c.partition.verbose_output = boost_kahypar::lexical_cast<bool>(value);
         return mt_kahypar_status_t::SUCCESS;
-      } catch ( boost::bad_lexical_cast& ) {
+      } catch ( boost_kahypar::bad_lexical_cast& ) {
         report_conversion_error("boolean");
         return mt_kahypar_status_t::INVALID_PARAMETER;
       }

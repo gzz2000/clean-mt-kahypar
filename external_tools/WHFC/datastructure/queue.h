@@ -1,6 +1,6 @@
 #pragma once
 
-#include <boost/range/irange.hpp>
+#include <boost_kahypar/range/irange.hpp>
 #include <vector>
 #include "../util/range.h"
 
@@ -53,7 +53,7 @@ public:
         return back;
     }
 
-    decltype(auto) currentLayerIndices() { return boost::irange<size_t>(qfront, layerend); }
+    decltype(auto) currentLayerIndices() { return boost_kahypar::irange<size_t>(qfront, layerend); }
 
     T elementAt(const size_t pos) const { return queue[pos]; }
     void setTo(const size_t pos, T element) { queue[pos] = element; }

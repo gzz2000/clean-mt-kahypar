@@ -28,7 +28,7 @@
 #include "mt-kahypar/partition/refinement/rebalancing/simple_rebalancer.h"
 
 
-#include <boost/dynamic_bitset.hpp>
+#include <boost_kahypar/dynamic_bitset.hpp>
 
 #include <tbb/parallel_for_each.h>
 #include <tbb/enumerable_thread_specific.h>
@@ -189,7 +189,7 @@ namespace mt_kahypar {
   vec<Move> SimpleRebalancer<GraphAndGainTypes>::repairEmptyBlocks(PartitionedHypergraph& phg) {
     // First detect if there are any empty blocks.
     const size_t k = size_t(_context.partition.k);
-    boost::dynamic_bitset<> is_empty(k);
+    boost_kahypar::dynamic_bitset<> is_empty(k);
     vec<PartitionID> empty_blocks;
     for (size_t i = 0; i < k; ++i) {
       if (phg.partWeight(PartitionID(i)) == 0) {

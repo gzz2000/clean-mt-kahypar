@@ -1,7 +1,7 @@
 #pragma once
 
-#include <boost/dynamic_bitset.hpp>
+#include <boost_kahypar/dynamic_bitset.hpp>
 
 namespace whfc {
-    using BitVector = boost::dynamic_bitset<>;
+    using BitVector = boost_kahypar::dynamic_bitset<>;
 }
