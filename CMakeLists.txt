@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.26)
+cmake_minimum_required(VERSION 3.22)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 
 # define the project version
@@ -309,40 +309,38 @@ if(BUILD_SHARED_LIBS AND KAHYPAR_STATIC_LINK_DEPENDENCIES)
   endif()
 endif()
 
-block()
-  # define required boost libraries
-  set(BOOST_INCLUDE_LIBRARIES program_options range dynamic_bitset lexical_cast)
+# define required boost libraries
+set(BOOST_INCLUDE_LIBRARIES program_options range dynamic_bitset lexical_cast)
 
-  if(KAHYPAR_STATIC_LINK_DEPENDENCIES)
-    set(Boost_USE_STATIC_LIBS ON)
-    set(BUILD_SHARED_LIBS OFF)
-  endif()
-  if(KAHYPAR_DOWNLOAD_BOOST)
-    # Download Boost
-    set(BOOST_ENABLE_CMAKE ON)
-    FetchContent_Declare(
-      Boost EXCLUDE_FROM_ALL SYSTEM
-      URL https://github.com/boostorg/boost/releases/download/boost-1.86.0/boost-1.86.0-cmake.tar.gz
+if(KAHYPAR_STATIC_LINK_DEPENDENCIES)
+  set(Boost_USE_STATIC_LIBS ON)
+  set(BUILD_SHARED_LIBS OFF)
+endif()
+if(KAHYPAR_DOWNLOAD_BOOST)
+  # Download Boost
+  set(BOOST_ENABLE_CMAKE ON)
+  FetchContent_Declare(
+    Boost EXCLUDE_FROM_ALL SYSTEM
+    URL https://github.com/boostorg/boost/releases/download/boost-1.86.0/boost-1.86.0-cmake.tar.gz
     )
-    FetchContent_MakeAvailable(Boost)
-  else()
-    # Find system Boost
-    find_package(Boost 1.69 REQUIRED COMPONENTS program_options)
-    if(NOT Boost_FOUND)
-      message(FATAL_ERROR "
+  FetchContent_MakeAvailable(Boost)
+else()
+  # Find system Boost
+  find_package(Boost 1.69 REQUIRED COMPONENTS program_options)
+  if(NOT Boost_FOUND)
+    message(FATAL_ERROR "
         Boost not found. Install Boost on your system or
         add -DKAHYPAR_DOWNLOAD_BOOST=On to the cmake build command.")
-    endif()
-    message(STATUS "Boost Include: ${Boost_INCLUDE_DIRS}, Boost Library: ${Boost_LIBRARY_DIRS}")
   endif()
+  message(STATUS "Boost Include: ${Boost_INCLUDE_DIRS}, Boost Library: ${Boost_LIBRARY_DIRS}")
+endif()
 
-  # newer boost versions require to add all targets explicitly
-  foreach(BOOST_TARGET ${BOOST_INCLUDE_LIBRARIES})
-    if(TARGET Boost::${BOOST_TARGET})
-      target_link_libraries(MtKaHyPar-Include INTERFACE Boost::${BOOST_TARGET})
-    endif()
-  endforeach()
-endblock()
+# newer boost versions require to add all targets explicitly
+foreach(BOOST_TARGET ${BOOST_INCLUDE_LIBRARIES})
+  if(TARGET Boost::${BOOST_TARGET})
+    target_link_libraries(MtKaHyPar-Include INTERFACE Boost::${BOOST_TARGET})
+  endif()
+endforeach()
 
 
 if(KAHYPAR_DOWNLOAD_TBB)
