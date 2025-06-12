@@ -27,8 +27,8 @@
 #include <atomic>
 #include "gmock/gmock.h"
 
-#include <tbb/parallel_for.h>
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/parallel_for.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/datastructures/static_graph_factory.h"
@@ -208,7 +208,7 @@ class AGainCache : public Test {
     };
 
     if ( !perform_moves_sequentially ) {
-      tbb::parallel_for(UL(0), batch.size(),
+      tbb_kahypar::parallel_for(UL(0), batch.size(),
         [&](const size_t i) {
           move_node(batch[i].u);
           move_node(batch[i].v);
@@ -220,7 +220,7 @@ class AGainCache : public Test {
       }
     }
 
-    tbb::parallel_for(UL(0), batch.size(),
+    tbb_kahypar::parallel_for(UL(0), batch.size(),
       [&](const size_t i) {
         if ( was_moved[batch[i].u] ) gain_cache.recomputeInvalidTerms(partitioned_hg, batch[i].u);
         if ( was_moved[batch[i].v] ) gain_cache.recomputeInvalidTerms(partitioned_hg, batch[i].v);
@@ -232,11 +232,11 @@ class AGainCache : public Test {
       // Coarsening
       utils::Randomize& rand = utils::Randomize::instance();
       std::atomic<HypernodeID> current_num_nodes(hypergraph.initialNumNodes());
-      tbb::enumerable_thread_specific<vec<HypernodeID>> local_rep;
+      tbb_kahypar::enumerable_thread_specific<vec<HypernodeID>> local_rep;
       vec<vec<ParallelHyperedge>> parallel_hes;
       while ( current_num_nodes > contraction_limit ) {
         const HypernodeID num_nodes_before_pass = current_num_nodes.load();
-        tbb::parallel_for(ID(0), current_num_nodes.load(),
+        tbb_kahypar::parallel_for(ID(0), current_num_nodes.load(),
           [&](const HypernodeID& hn) {
             if ( hypergraph.nodeIsEnabled(hn) && current_num_nodes.load() > contraction_limit ) {
               vec<HypernodeID> representatives = local_rep.local();

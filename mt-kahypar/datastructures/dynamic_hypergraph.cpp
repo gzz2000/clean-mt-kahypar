@@ -27,11 +27,11 @@
 
 #include "mt-kahypar/datastructures/dynamic_hypergraph.h"
 
-#include <tbb/blocked_range.h>
-#include <tbb/parallel_scan.h>
-#include <tbb/parallel_sort.h>
-#include <tbb/parallel_reduce.h>
-#include <tbb/concurrent_queue.h>
+#include <tbb_kahypar/blocked_range.h>
+#include <tbb_kahypar/parallel_scan.h>
+#include <tbb_kahypar/parallel_sort.h>
+#include <tbb_kahypar/parallel_reduce.h>
+#include <tbb_kahypar/concurrent_queue.h>
 
 #include "mt-kahypar/parallel/stl/scalable_queue.h"
 #include "mt-kahypar/datastructures/concurrent_bucket_map.h"
@@ -43,8 +43,8 @@ namespace ds {
 
 // ! Recomputes the total weight of the hypergraph (parallel)
 void DynamicHypergraph::updateTotalWeight(parallel_tag_t) {
-  _total_weight = tbb::parallel_reduce(tbb::blocked_range<HypernodeID>(ID(0), _num_hypernodes), 0,
-    [this](const tbb::blocked_range<HypernodeID>& range, HypernodeWeight init) {
+  _total_weight = tbb_kahypar::parallel_reduce(tbb_kahypar::blocked_range<HypernodeID>(ID(0), _num_hypernodes), 0,
+    [this](const tbb_kahypar::blocked_range<HypernodeID>& range, HypernodeWeight init) {
       HypernodeWeight weight = init;
       for (HypernodeID hn = range.begin(); hn < range.end(); ++hn) {
         if ( nodeIsEnabled(hn) ) {
@@ -140,7 +140,7 @@ void DynamicHypergraph::uncontract(const Batch& batch,
   }(), "Batch contains uncontractions from different batches or from a different hypergraph version");
 
   _hes_to_resize_flag_array.reset();
-  tbb::parallel_for(UL(0), batch.size(), [&](const size_t i) {
+  tbb_kahypar::parallel_for(UL(0), batch.size(), [&](const size_t i) {
     const Memento& memento = batch[i];
     ASSERT(!hypernode(memento.u).isDisabled(), "Hypernode" << memento.u << "is disabled");
     ASSERT(hypernode(memento.v).isDisabled(), "Hypernode" << memento.v << "is not invalid");
@@ -219,8 +219,8 @@ VersionedBatchVector DynamicHypergraph::createBatchUncontractionHierarchy(const 
 
   if ( !test ) {
     // Store the batch index of each vertex in its hypernode data structure
-    tbb::parallel_for(UL(0), num_versions, [&](const size_t version) {
-      tbb::parallel_for(UL(0), versioned_batches[version].size(), [&](const size_t local_batch_idx) {
+    tbb_kahypar::parallel_for(UL(0), num_versions, [&](const size_t version) {
+      tbb_kahypar::parallel_for(UL(0), versioned_batches[version].size(), [&](const size_t local_batch_idx) {
         const size_t batch_idx = batch_sizes_prefix_sum[version] + local_batch_idx;
         for ( const Memento& memento : versioned_batches[version][local_batch_idx] ) {
           hypernode(memento.v).setBatchIndex(batch_idx);
@@ -229,7 +229,7 @@ VersionedBatchVector DynamicHypergraph::createBatchUncontractionHierarchy(const 
     });
 
     // Sort the invalid part of each hyperedge according to the batch indices of its pins
-    tbb::parallel_for(ID(0), _num_hyperedges, [&](const HyperedgeID& he) {
+    tbb_kahypar::parallel_for(ID(0), _num_hyperedges, [&](const HyperedgeID& he) {
       const size_t first_invalid_entry = hyperedge(he).firstInvalidEntry();
       const size_t last_invalid_entry = hyperedge(he + 1).firstEntry();
       std::sort(_incidence_array.begin() + first_invalid_entry,
@@ -304,7 +304,7 @@ parallel::scalable_vector<DynamicHypergraph::ParallelHyperedge> DynamicHypergrap
   // after its hash. A bucket is processed by one thread and parallel
   // hyperedges are detected by comparing the pins of hyperedges with
   // the same hash.
-  tbb::parallel_for(UL(0), hyperedge_hash_map.numBuckets(), [&](const size_t bucket) {
+  tbb_kahypar::parallel_for(UL(0), hyperedge_hash_map.numBuckets(), [&](const size_t bucket) {
     auto& hyperedge_bucket = hyperedge_hash_map.getBucket(bucket);
     std::sort(hyperedge_bucket.begin(), hyperedge_bucket.end(),
       [&](const ContractedHyperedgeInformation& lhs, const ContractedHyperedgeInformation& rhs) {
@@ -360,7 +360,7 @@ parallel::scalable_vector<DynamicHypergraph::ParallelHyperedge> DynamicHypergrap
  */
 void DynamicHypergraph::restoreSinglePinAndParallelNets(const parallel::scalable_vector<ParallelHyperedge>& hes_to_restore) {
   // Restores all previously removed hyperedges
-  tbb::parallel_for(UL(0), hes_to_restore.size(), [&](const size_t i) {
+  tbb_kahypar::parallel_for(UL(0), hes_to_restore.size(), [&](const size_t i) {
     const ParallelHyperedge& parallel_he = hes_to_restore[i];
     const HyperedgeID he = parallel_he.removed_hyperedge;
     ASSERT(!edgeIsEnabled(he), "Hyperedge" << he << "should be disabled");
@@ -398,16 +398,16 @@ DynamicHypergraph DynamicHypergraph::copy(parallel_tag_t) const {
   hypergraph._version = _version;
   hypergraph._contraction_index.store(_contraction_index.load());
 
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     hypergraph._hypernodes.resize(_hypernodes.size());
     memcpy(hypergraph._hypernodes.data(), _hypernodes.data(),
       sizeof(Hypernode) * _hypernodes.size());
   }, [&] {
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       hypergraph._incident_nets = _incident_nets.copy(parallel_tag_t());
     }, [&] {
       hypergraph._acquired_hns.resize(_acquired_hns.size());
-      tbb::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID& hn) {
+      tbb_kahypar::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID& hn) {
         hypergraph._acquired_hns[hn] = _acquired_hns[hn];
       });
     });
@@ -423,7 +423,7 @@ DynamicHypergraph DynamicHypergraph::copy(parallel_tag_t) const {
       sizeof(HypernodeID) * _incidence_array.size());
   }, [&] {
     hypergraph._acquired_hes.resize(_num_hyperedges);
-    tbb::parallel_for(ID(0), _num_hyperedges, [&](const HyperedgeID& he) {
+    tbb_kahypar::parallel_for(ID(0), _num_hyperedges, [&](const HyperedgeID& he) {
       hypergraph._acquired_hes[he] = _acquired_hes[he];
     });
   }, [&] {
@@ -511,7 +511,7 @@ void DynamicHypergraph::memoryConsumption(utils::MemoryTreeNode* parent) const {
 // ! Only for testing
 bool DynamicHypergraph::verifyIncidenceArrayAndIncidentNets() {
   bool success = true;
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     doParallelForAllNodes([&](const HypernodeID& hn) {
       for ( const HyperedgeID& he : incidentEdges(hn) ) {
         bool found = false;

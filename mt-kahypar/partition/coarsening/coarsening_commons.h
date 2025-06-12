@@ -67,7 +67,7 @@ public:
   }
 
   void freeInternalData() {
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       _contracted_hypergraph.freeInternalData();
     }, [&] {
       parallel::free(_communities);
@@ -116,9 +116,9 @@ public:
     }
 
   ~UncoarseningData() noexcept {
-    tbb::parallel_for(UL(0), hierarchy.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), hierarchy.size(), [&](const size_t i) {
       (hierarchy)[i].freeInternalData();
-    }, tbb::static_partitioner());
+    }, tbb_kahypar::static_partitioner());
   }
 
   void setPartitionedHypergraph(PartitionedHypergraph&& phg) {

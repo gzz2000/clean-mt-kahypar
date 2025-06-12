@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include <tbb/parallel_for_each.h>
+#include <tbb_kahypar/parallel_for_each.h>
 
 #include "mt-kahypar/parallel/atomic_wrapper.h"
 #include "mt-kahypar/parallel/stl/scalable_vector.h"
@@ -98,7 +98,7 @@ struct WorkContainer {
   }
 
   void shuffle() {
-    tbb::parallel_for_each(tls_queues, [&](ThreadQueue<T>& q) {
+    tbb_kahypar::parallel_for_each(tls_queues, [&](ThreadQueue<T>& q) {
       utils::Randomize::instance().shuffleVector(q.elements);
     });
   }

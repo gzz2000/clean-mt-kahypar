@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/datastructures/static_hypergraph.h"
 #include "mt-kahypar/parallel/atomic_wrapper.h"
@@ -41,7 +41,7 @@ class StaticHypergraphFactory {
   using HyperedgeVector = parallel::scalable_vector<parallel::scalable_vector<HypernodeID>>;
   using Counter = parallel::scalable_vector<size_t>;
   using AtomicCounter = parallel::scalable_vector<parallel::IntegralAtomicWrapper<size_t>>;
-  using ThreadLocalCounter = tbb::enumerable_thread_specific<Counter>;
+  using ThreadLocalCounter = tbb_kahypar::enumerable_thread_specific<Counter>;
 
  public:
   static StaticHypergraph construct(const HypernodeID num_hypernodes,

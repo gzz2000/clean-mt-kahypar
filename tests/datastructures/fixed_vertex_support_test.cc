@@ -27,7 +27,7 @@
 
 
 #include "gmock/gmock.h"
-#include <tbb/task_group.h>
+#include <tbb_kahypar/task_group.h>
 
 #include "mt-kahypar/datastructures/static_hypergraph.h"
 #include "mt-kahypar/datastructures/static_hypergraph_factory.h"
@@ -85,7 +85,7 @@ class AFixedVertexSupport : public Test {
 template <class F, class K>
 void runParallel(F f1, K f2) {
   std::atomic<int> cnt(0);
-  tbb::task_group group;
+  tbb_kahypar::task_group group;
 
   group.run([&] {
         cnt++;

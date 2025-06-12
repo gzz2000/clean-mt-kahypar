@@ -25,8 +25,8 @@
  ******************************************************************************/
 #pragma once
 
-#include <tbb/concurrent_vector.h>
-#include <tbb/concurrent_queue.h>
+#include <tbb_kahypar/concurrent_vector.h>
+#include <tbb_kahypar/concurrent_queue.h>
 
 #include "mt-kahypar/partition/context.h"
 #include "mt-kahypar/partition/refinement/flows/i_flow_refiner.h"
@@ -175,12 +175,12 @@ private:
   const Context& _context;
 
   // ! Indices of unused refiners
-  tbb::concurrent_queue<size_t> _unused_refiners;
+  tbb_kahypar::concurrent_queue<size_t> _unused_refiners;
   // ! Available refiners
   vec<std::unique_ptr<IFlowRefiner>> _refiner;
   // ! Mapping from search id to refiner
   SpinLock _search_lock;
-  tbb::concurrent_vector<ActiveSearch> _active_searches;
+  tbb_kahypar::concurrent_vector<ActiveSearch> _active_searches;
 
   ThreadOrganizer _threads;
   size_t _num_parallel_refiners;

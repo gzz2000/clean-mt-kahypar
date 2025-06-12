@@ -2,12 +2,12 @@
 
 #include <atomic>
 #include <iostream>
-#include <tbb/task_scheduler_observer.h>
+#include <tbb_kahypar/task_scheduler_observer.h>
 #include <thread>
 
 namespace whfc {
 
-    class pinning_observer : public tbb::task_scheduler_observer {
+    class pinning_observer : public tbb_kahypar::task_scheduler_observer {
         size_t ncpus;
 
     public:
@@ -15,7 +15,7 @@ namespace whfc {
 
         void on_scheduler_entry(bool) {
             const size_t size = CPU_ALLOC_SIZE(ncpus);
-            int slot = tbb::this_task_arena::current_thread_index();
+            int slot = tbb_kahypar::this_task_arena::current_thread_index();
             cpu_set_t target_mask;
             CPU_ZERO(&target_mask);
             CPU_SET(slot, &target_mask);

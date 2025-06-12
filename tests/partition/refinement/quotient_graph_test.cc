@@ -90,7 +90,7 @@ TEST_F(AQuotientGraph, SimulatesBlockScheduling) {
     }
   }
 
-  tbb::parallel_for(0U, std::thread::hardware_concurrency(), [&](const unsigned int) {
+  tbb_kahypar::parallel_for(0U, std::thread::hardware_concurrency(), [&](const unsigned int) {
     while ( true ) {
       SearchID search_id = qg.requestNewSearch(refiner);
       if ( search_id != QuotientGraph::INVALID_SEARCH_ID ) {
@@ -148,7 +148,7 @@ TEST_F(AQuotientGraph, SimulatesBlockSchedulingWithSuccessfulSearches) {
     }
   }
 
-  tbb::parallel_for(0U, std::thread::hardware_concurrency(), [&](const unsigned int cpu_id) {
+  tbb_kahypar::parallel_for(0U, std::thread::hardware_concurrency(), [&](const unsigned int cpu_id) {
     while ( true ) {
       SearchID search_id = qg.requestNewSearch(refiner);
       if ( search_id != QuotientGraph::INVALID_SEARCH_ID ) {

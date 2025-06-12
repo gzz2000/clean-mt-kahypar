@@ -2,7 +2,7 @@
 
 #include "push_relabel_commons.h"
 
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/parallel_for.h>
 
 #include "../datastructure/buffered_vector.h"
 #include "../datastructure/flow_hypergraph.h"
@@ -66,7 +66,7 @@ namespace whfc {
 
         void dischargeActiveNodes() {
             resetRound();
-            tbb::enumerable_thread_specific<size_t> work(0);
+            tbb_kahypar::enumerable_thread_specific<size_t> work(0);
             auto task = [&](size_t i) {
                 const Node u = active[i];
                 assert(excess[u] > 0);
@@ -81,13 +81,13 @@ namespace whfc {
                     work.local() += dischargeInNode(u);
                 }
             };
-            tbb::parallel_for<size_t>(0UL, num_active, task);
+            tbb_kahypar::parallel_for<size_t>(0UL, num_active, task);
             next_active.finalize();
             work_since_last_global_relabel += work.combine(std::plus<>());
         }
 
         void applyUpdates() {
-            tbb::parallel_for<size_t>(0UL, num_active, [&](size_t i) {
+            tbb_kahypar::parallel_for<size_t>(0UL, num_active, [&](size_t i) {
                 const Node u = active[i];
                 node_state[u] = LevelState::NOT_MODIFIED;
                 if (level[u] >= max_level) {
@@ -101,7 +101,7 @@ namespace whfc {
                 excess[u] += excess_diff[u];
                 excess_diff[u] = 0;
             });
-            tbb::parallel_for<size_t>(0UL, next_active.size(), [&](size_t i) {
+            tbb_kahypar::parallel_for<size_t>(0UL, next_active.size(), [&](size_t i) {
                 const Node u = next_active[i];
                 assert(node_state[u] == LevelState::NOT_MODIFIED);
                 excess[u] += excess_diff[u];
@@ -352,8 +352,8 @@ namespace whfc {
         }
 
         void globalRelabel() {
-            tbb::parallel_for<size_t>(
-                    0, max_level, [&](size_t i) { level[i] = isTarget(Node(i)) ? 0 : max_level; }, tbb::static_partitioner());
+            tbb_kahypar::parallel_for<size_t>(
+                    0, max_level, [&](size_t i) { level[i] = isTarget(Node(i)) ? 0 : max_level; }, tbb_kahypar::static_partitioner());
             next_active.clear();
             for (const Node t : target_piercing_nodes) {
                 next_active.push_back_atomic(t);
@@ -378,7 +378,7 @@ namespace whfc {
             size_t last = next_active.size();
             int dist = 1;
             while (first != last) {
-                tbb::parallel_for<size_t>(first, last, [&](size_t i) { scan(next_active[i], dist); });
+                tbb_kahypar::parallel_for<size_t>(first, last, [&](size_t i) { scan(next_active[i], dist); });
                 next_active.finalize();
                 first = last;
                 last = next_active.size();

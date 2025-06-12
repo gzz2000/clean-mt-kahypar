@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 
 #include "mt-kahypar/datastructures/dynamic_hypergraph.h"
@@ -42,9 +42,9 @@ class DynamicHypergraphFactory {
   using HyperedgeVector = parallel::scalable_vector<parallel::scalable_vector<HypernodeID>>;
   using Counter = parallel::scalable_vector<size_t>;
   using AtomicCounter = parallel::scalable_vector<parallel::IntegralAtomicWrapper<size_t>>;
-  using ThreadLocalCounter = tbb::enumerable_thread_specific<Counter>;
-  using ThreadLocalBitset = tbb::enumerable_thread_specific<kahypar::ds::FastResetFlagArray<>>;
-  using ThreadLocalBitvector = tbb::enumerable_thread_specific<parallel::scalable_vector<bool>>;
+  using ThreadLocalCounter = tbb_kahypar::enumerable_thread_specific<Counter>;
+  using ThreadLocalBitset = tbb_kahypar::enumerable_thread_specific<kahypar::ds::FastResetFlagArray<>>;
+  using ThreadLocalBitvector = tbb_kahypar::enumerable_thread_specific<parallel::scalable_vector<bool>>;
 
 
  public:

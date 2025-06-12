@@ -351,7 +351,7 @@ mt_kahypar_partitioned_hypergraph_t create_partitioned_hypergraph(Hypergraph& hg
                                                                   const mt_kahypar_partition_id_t* partition) {
   PartitionedHypergraph partitioned_hg(num_blocks, hg, parallel_tag_t { });
   const mt_kahypar::HypernodeID num_nodes = hg.initialNumNodes();
-  tbb::parallel_for(ID(0), num_nodes, [&](const mt_kahypar::HypernodeID& hn) {
+  tbb_kahypar::parallel_for(ID(0), num_nodes, [&](const mt_kahypar::HypernodeID& hn) {
     partitioned_hg.setOnlyNodePart(hn, partition[hn]);
   });
   partitioned_hg.initializePartition();

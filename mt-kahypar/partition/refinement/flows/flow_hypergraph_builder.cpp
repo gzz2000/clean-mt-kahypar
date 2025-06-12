@@ -27,11 +27,11 @@
 
 #include "mt-kahypar/partition/refinement/flows/flow_hypergraph_builder.h"
 
-#include <tbb/blocked_range.h>
-#include <tbb/parallel_invoke.h>
-#include <tbb/parallel_reduce.h>
-#include <tbb/parallel_scan.h>
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/blocked_range.h>
+#include <tbb_kahypar/parallel_invoke.h>
+#include <tbb_kahypar/parallel_reduce.h>
+#include <tbb_kahypar/parallel_scan.h>
+#include <tbb_kahypar/parallel_for.h>
 
 namespace mt_kahypar {
 
@@ -86,7 +86,7 @@ bool FlowHypergraphBuilder::finishHyperedge() {
 
 void FlowHypergraphBuilder::allocateHyperedgesAndPins(const size_t num_hyperedges,
                                                       const size_t num_pins) {
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     hyperedges.assign(num_hyperedges + 1, HyperedgeData {
       whfc::PinIndex::Invalid(), whfc::Flow(0) });
   }, [&] {
@@ -102,7 +102,7 @@ void FlowHypergraphBuilder::finalizeHyperedges() {
       _tmp_csr_buckets[i - 1]._global_start_pin_idx + _tmp_csr_buckets[i - 1]._num_pins;
   }
 
-  tbb::parallel_for(UL(0), _tmp_csr_buckets.size(), [&](const size_t idx) {
+  tbb_kahypar::parallel_for(UL(0), _tmp_csr_buckets.size(), [&](const size_t idx) {
     _tmp_csr_buckets[idx].copyDataToFlowHypergraph(hyperedges, pins);
   });
 
@@ -117,11 +117,11 @@ void FlowHypergraphBuilder::finalizeHyperedges() {
 void FlowHypergraphBuilder::finalizeParallel() {
   ASSERT(verifyParallelConstructedHypergraph(), "Parallel construction failed!");
 
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     // Determine maximum edge capacity
-    maxHyperedgeCapacity = tbb::parallel_reduce(
-      tbb::blocked_range<size_t>(UL(0), hyperedges.size()), whfc::Flow(0),
-      [&](const tbb::blocked_range<size_t>& range, whfc::Flow init) {
+    maxHyperedgeCapacity = tbb_kahypar::parallel_reduce(
+      tbb_kahypar::blocked_range<size_t>(UL(0), hyperedges.size()), whfc::Flow(0),
+      [&](const tbb_kahypar::blocked_range<size_t>& range, whfc::Flow init) {
         whfc::Flow max_capacity = init;
         for (size_t i = range.begin(); i < range.end(); ++i) {
           max_capacity = std::max(max_capacity, hyperedges[i].capacity);
@@ -132,9 +132,9 @@ void FlowHypergraphBuilder::finalizeParallel() {
       });
   }, [&] {
     // Determine total node weight
-    total_node_weight = tbb::parallel_reduce(
-      tbb::blocked_range<size_t>(UL(0), static_cast<size_t>(numNodes())), whfc::NodeWeight(0),
-      [&](const tbb::blocked_range<size_t>& range, whfc::NodeWeight init) {
+    total_node_weight = tbb_kahypar::parallel_reduce(
+      tbb_kahypar::blocked_range<size_t>(UL(0), static_cast<size_t>(numNodes())), whfc::NodeWeight(0),
+      [&](const tbb_kahypar::blocked_range<size_t>& range, whfc::NodeWeight init) {
         whfc::NodeWeight weight = init;
         for (size_t i = range.begin(); i < range.end(); ++i) {
           weight += nodes[i].weight;
@@ -148,9 +148,9 @@ void FlowHypergraphBuilder::finalizeParallel() {
   });
 
   // Compute node degree prefix sum
-  tbb::parallel_scan(
-    tbb::blocked_range<size_t>(UL(0), numNodes() + 1), whfc::InHeIndex(0),
-    [&](const tbb::blocked_range<size_t>& r, whfc::InHeIndex sum, bool is_final_scan) -> whfc::InHeIndex {
+  tbb_kahypar::parallel_scan(
+    tbb_kahypar::blocked_range<size_t>(UL(0), numNodes() + 1), whfc::InHeIndex(0),
+    [&](const tbb_kahypar::blocked_range<size_t>& r, whfc::InHeIndex sum, bool is_final_scan) -> whfc::InHeIndex {
       whfc::InHeIndex tmp = sum;
       for ( size_t i = r.begin(); i < r.end(); ++i ) {
         tmp += nodes[i].first_out;
@@ -164,7 +164,7 @@ void FlowHypergraphBuilder::finalizeParallel() {
     }
   );
 
-  tbb::parallel_for(UL(0), numHyperedges(), [&](const size_t i) {
+  tbb_kahypar::parallel_for(UL(0), numHyperedges(), [&](const size_t i) {
     const whfc::Hyperedge e(i);
     for ( auto pin_it = beginIndexPins(e); pin_it != endIndexPins(e); pin_it++ ) {
       Pin& p = pins[pin_it];

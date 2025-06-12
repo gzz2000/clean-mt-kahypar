@@ -30,7 +30,7 @@
 #include <mutex>
 #include <queue>
 
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/parallel_for.h>
 
 #include "include/mtkahypartypes.h"
 
@@ -381,9 +381,9 @@ class DynamicHypergraph {
 
   using IncidenceArray = Array<HypernodeID>;
   using OwnershipVector = parallel::scalable_vector<parallel::IntegralAtomicWrapper<bool>>;
-  using ThreadLocalHyperedgeVector = tbb::enumerable_thread_specific<parallel::scalable_vector<HyperedgeID>>;
-  using ThreadLocalBitset = tbb::enumerable_thread_specific<kahypar::ds::FastResetFlagArray<>>;
-  using ThreadLocalBitvector = tbb::enumerable_thread_specific<parallel::scalable_vector<bool>>;
+  using ThreadLocalHyperedgeVector = tbb_kahypar::enumerable_thread_specific<parallel::scalable_vector<HyperedgeID>>;
+  using ThreadLocalBitset = tbb_kahypar::enumerable_thread_specific<kahypar::ds::FastResetFlagArray<>>;
+  using ThreadLocalBitvector = tbb_kahypar::enumerable_thread_specific<parallel::scalable_vector<bool>>;
 
  public:
   static constexpr bool is_graph = false;
@@ -562,7 +562,7 @@ class DynamicHypergraph {
   // ! for each vertex
   template<typename F>
   void doParallelForAllNodes(const F& f) const {
-    tbb::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID& hn) {
+    tbb_kahypar::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID& hn) {
       if ( nodeIsEnabled(hn) ) {
         f(hn);
       }
@@ -580,7 +580,7 @@ class DynamicHypergraph {
   // ! for each net
   template<typename F>
   void doParallelForAllEdges(const F& f) const {
-    tbb::parallel_for(ID(0), _num_hyperedges, [&](const HyperedgeID& he) {
+    tbb_kahypar::parallel_for(ID(0), _num_hyperedges, [&](const HyperedgeID& he) {
       if ( edgeIsEnabled(he) ) {
         f(he);
       }
@@ -885,7 +885,7 @@ class DynamicHypergraph {
     const size_t incidence_array_end = hyperedge(he).firstInvalidEntry();
     kahypar::ds::FastResetFlagArray<>& he_to_remove = _he_bitset.local();
     he_to_remove.set(he, true);
-    tbb::parallel_for(incidence_array_start, incidence_array_end, [&](const size_t pos) {
+    tbb_kahypar::parallel_for(incidence_array_start, incidence_array_end, [&](const size_t pos) {
       const HypernodeID pin = _incidence_array[pos];
       _incident_nets.removeIncidentNets(pin, he_to_remove);
     });
@@ -900,7 +900,7 @@ class DynamicHypergraph {
     enableHyperedge(he);
     const size_t incidence_array_start = hyperedge(he).firstEntry();
     const size_t incidence_array_end = hyperedge(he).firstInvalidEntry();
-    tbb::parallel_for(incidence_array_start, incidence_array_end, [&](const size_t pos) {
+    tbb_kahypar::parallel_for(incidence_array_start, incidence_array_end, [&](const size_t pos) {
       const HypernodeID pin = _incidence_array[pos];
       _incident_nets.restoreIncidentNets(pin);
     });

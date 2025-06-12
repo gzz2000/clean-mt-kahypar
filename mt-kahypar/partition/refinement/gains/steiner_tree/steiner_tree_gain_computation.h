@@ -28,7 +28,7 @@
 
 #include <vector>
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/partition/refinement/gains/gain_computation_base.h"
 #include "mt-kahypar/partition/refinement/gains/steiner_tree/steiner_tree_attributed_gains.h"
@@ -138,7 +138,7 @@ class SteinerTreeGainComputation : public GainComputationBase<SteinerTreeGainCom
 
   // ! Before gain computation, we construct a bitset that contains all
   // ! adjacent nodes of a block
-  tbb::enumerable_thread_specific<ds::Bitset> _local_adjacent_blocks;
+  tbb_kahypar::enumerable_thread_specific<ds::Bitset> _local_adjacent_blocks;
   ds::Bitset _all_blocks;
 };
 

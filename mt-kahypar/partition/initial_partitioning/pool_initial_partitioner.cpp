@@ -26,7 +26,7 @@
 
 #include "pool_initial_partitioner.h"
 
-#include <tbb/task_group.h>
+#include <tbb_kahypar/task_group.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/partition/factories.h"
@@ -71,7 +71,7 @@ void Pool<TypeTraits>::bipartition(PartitionedHypergraph& hypergraph,
   // partitioning algorithms to the threads
   std::shuffle(_ip_task_lists.begin(), _ip_task_lists.end(), rng);
 
-  tbb::task_group tg;
+  tbb_kahypar::task_group tg;
   InitialPartitioningDataContainer<TypeTraits> ip_data(hypergraph, context);
   ip_data_container_t* ip_data_ptr = ip::to_pointer(ip_data);
   for ( const auto& ip_task : _ip_task_lists ) {

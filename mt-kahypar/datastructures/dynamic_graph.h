@@ -31,7 +31,7 @@
 #include <mutex>
 #include <queue>
 
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/parallel_for.h>
 
 #include "include/mtkahypartypes.h"
 
@@ -313,7 +313,7 @@ class DynamicGraph {
   };
 
   using OwnershipVector = parallel::scalable_vector<parallel::IntegralAtomicWrapper<bool>>;
-  using ThreadLocalHyperedgeVector = tbb::enumerable_thread_specific<parallel::scalable_vector<HyperedgeID>>;
+  using ThreadLocalHyperedgeVector = tbb_kahypar::enumerable_thread_specific<parallel::scalable_vector<HyperedgeID>>;
   using Edge = DynamicAdjacencyArray::Edge;
 
  public:
@@ -449,7 +449,7 @@ class DynamicGraph {
   // ! for each vertex
   template<typename F>
   void doParallelForAllNodes(const F& f) const {
-    tbb::parallel_for(ID(0), numNodes(), [&](const HypernodeID& hn) {
+    tbb_kahypar::parallel_for(ID(0), numNodes(), [&](const HypernodeID& hn) {
       if ( nodeIsEnabled(hn) ) {
         f(hn);
       }

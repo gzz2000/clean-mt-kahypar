@@ -26,7 +26,7 @@
 
 #include "mt-kahypar/partition/refinement/fm/global_rollback.h"
 
-#include <tbb/parallel_scan.h>
+#include <tbb_kahypar/parallel_scan.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/partition/metrics.h"
@@ -54,14 +54,14 @@ namespace mt_kahypar {
                (gain == o.gain && std::tie(heaviest_weight, best_index) < std::tie(o.heaviest_weight, o.best_index));
       }
     };
-    std::shared_ptr< tbb::enumerable_thread_specific<Prefix> > local_best;
+    std::shared_ptr< tbb_kahypar::enumerable_thread_specific<Prefix> > local_best;
 
     Gain gain_sum = 0;
 
     vec<HypernodeWeight> part_weights;
     const std::vector<HypernodeWeight>& max_part_weights;
 
-    BalanceAndBestIndexScan(BalanceAndBestIndexScan& b, tbb::split) :
+    BalanceAndBestIndexScan(BalanceAndBestIndexScan& b, tbb_kahypar::split) :
             phg(b.phg),
             moves(b.moves),
             local_best(b.local_best),
@@ -76,14 +76,14 @@ namespace mt_kahypar {
                             const std::vector<HypernodeWeight>& max_part_weights) :
             phg(phg),
             moves(moves),
-            local_best(std::make_shared< tbb::enumerable_thread_specific<Prefix> >()),
+            local_best(std::make_shared< tbb_kahypar::enumerable_thread_specific<Prefix> >()),
             part_weights(part_weights),
             max_part_weights(max_part_weights)
     {
     }
 
 
-    void operator()(const tbb::blocked_range<MoveID>& r, tbb::pre_scan_tag ) {
+    void operator()(const tbb_kahypar::blocked_range<MoveID>& r, tbb_kahypar::pre_scan_tag ) {
       for (MoveID i = r.begin(); i < r.end(); ++i) {
         const Move& m = moves[i];
         if (m.isValid()) {  // skip locally reverted moves
@@ -103,7 +103,7 @@ namespace mt_kahypar {
       gain_sum += lhs.gain_sum;
     }
 
-    void operator()(const tbb::blocked_range<MoveID>& r, tbb::final_scan_tag ) {
+    void operator()(const tbb_kahypar::blocked_range<MoveID>& r, tbb_kahypar::final_scan_tag ) {
       size_t overloaded = 0;
       for (size_t i = 0; i < part_weights.size(); ++i) {
         if (part_weights[i] > max_part_weights[i]) {
@@ -169,10 +169,10 @@ namespace mt_kahypar {
 
     BalanceAndBestIndexScan<PartitionedHypergraph> s(phg, move_order, partWeights, maxPartWeights);
     // TODO set grain size in blocked_range? to avoid too many copies of part weights array. experiment with different values
-    tbb::parallel_scan(tbb::blocked_range<MoveID>(0, numMoves), s);
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<MoveID>(0, numMoves), s);
     typename BalanceAndBestIndexScan<PartitionedHypergraph>::Prefix b = s.finalize(partWeights);
 
-    tbb::parallel_for(b.best_index, numMoves, [&](const MoveID moveID) {
+    tbb_kahypar::parallel_for(b.best_index, numMoves, [&](const MoveID moveID) {
       const Move& m = move_order[moveID];
       if (m.isValid()) {
         moveVertex(phg, m.node, m.to, m.from);
@@ -181,7 +181,7 @@ namespace mt_kahypar {
 
     // recompute penalty term values since they are potentially invalid
     if constexpr (GainCache::invalidates_entries) {
-      tbb::parallel_for(MoveID(0), numMoves, [&](const MoveID i) {
+      tbb_kahypar::parallel_for(MoveID(0), numMoves, [&](const MoveID i) {
         gain_cache.recomputeInvalidTerms(phg, move_order[i].node);
       });
     }
@@ -387,12 +387,12 @@ namespace mt_kahypar {
       }
     };
 
-    tbb::parallel_for(MoveID(0), tracker.numPerformedMoves(), [&](MoveID m_id) {
+    tbb_kahypar::parallel_for(MoveID(0), tracker.numPerformedMoves(), [&](MoveID m_id) {
       tracker.moveOrder[m_id].gain = 0;
     });
 
     if (context.refinement.fm.iter_moves_on_recalc) {
-      tbb::parallel_for(0U, sharedData.moveTracker.numPerformedMoves(), [&](const MoveID local_move_id) {
+      tbb_kahypar::parallel_for(0U, sharedData.moveTracker.numPerformedMoves(), [&](const MoveID local_move_id) {
         const HypernodeID u = sharedData.moveTracker.moveOrder[local_move_id].node;
         if (tracker.wasNodeMovedInThisRound(u)) {
           for (HyperedgeID e : phg.incidentEdges(u)) {
@@ -411,7 +411,7 @@ namespace mt_kahypar {
         last_recalc_round.assign(phg.initialNumEdges(), CAtomic<uint32_t>(0));
       }
     } else{
-      tbb::parallel_for(ID(0), phg.initialNumEdges(), recalculate_and_distribute_for_hyperedge);
+      tbb_kahypar::parallel_for(ID(0), phg.initialNumEdges(), recalculate_and_distribute_for_hyperedge);
     }
   }
 
@@ -427,7 +427,7 @@ namespace mt_kahypar {
     const vec<Move>& move_order = tracker.moveOrder;
 
     // revert all moves
-    tbb::parallel_for(0U, numMoves, [&](const MoveID localMoveID) {
+    tbb_kahypar::parallel_for(0U, numMoves, [&](const MoveID localMoveID) {
       const Move& m = move_order[localMoveID];
       if (m.isValid()) {
         moveVertex(phg, m.node, m.to, m.from);
@@ -469,7 +469,7 @@ namespace mt_kahypar {
     }
 
     // revert rejected moves again
-    tbb::parallel_for(best_index, numMoves, [&](const MoveID i) {
+    tbb_kahypar::parallel_for(best_index, numMoves, [&](const MoveID i) {
       const Move& m = move_order[i];
       if (m.isValid()) {
         moveVertex(phg, m.node, m.to, m.from);
@@ -477,7 +477,7 @@ namespace mt_kahypar {
     });
 
     if constexpr (GainCache::invalidates_entries) {
-      tbb::parallel_for(0U, numMoves, [&](const MoveID i) {
+      tbb_kahypar::parallel_for(0U, numMoves, [&](const MoveID i) {
         gain_cache.recomputeInvalidTerms(phg, move_order[i].node);
       });
     }

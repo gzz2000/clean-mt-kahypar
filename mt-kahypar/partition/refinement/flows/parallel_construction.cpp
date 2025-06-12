@@ -28,7 +28,7 @@
 
 #include "kahypar-resources/utils/math.h"
 
-#include <tbb/concurrent_queue.h>
+#include <tbb_kahypar/concurrent_queue.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/parallel/stl/scalable_queue.h"
@@ -182,7 +182,7 @@ FlowProblem ParallelConstruction<GraphAndGainTypes>::constructDefault(const Part
   flow_problem.non_removable_cut = 0;
   _node_to_whfc.clear();
 
-  tbb::parallel_invoke([&]() {
+  tbb_kahypar::parallel_invoke([&]() {
     _node_to_whfc.clear();
     _node_to_whfc.setMaxSize(sub_hg.numNodes());
   }, [&] {
@@ -198,13 +198,13 @@ FlowProblem ParallelConstruction<GraphAndGainTypes>::constructDefault(const Part
   }
 
   // Add refinement nodes to flow network
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     // Add source nodes
     flow_problem.source = whfc::Node(0);
     whfc_to_node[flow_problem.source] = kInvalidHypernode;
     _flow_hg.nodeWeight(flow_problem.source) = whfc::NodeWeight(
       std::max(0, phg.partWeight(block_0) - sub_hg.weight_of_block_0));
-    tbb::parallel_for(UL(0), sub_hg.nodes_of_block_0.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), sub_hg.nodes_of_block_0.size(), [&](const size_t i) {
       const HypernodeID hn = sub_hg.nodes_of_block_0[i];
       const whfc::Node u(1 + i);
       whfc_to_node[u] = hn;
@@ -217,7 +217,7 @@ FlowProblem ParallelConstruction<GraphAndGainTypes>::constructDefault(const Part
     whfc_to_node[flow_problem.sink] = kInvalidHypernode;
     _flow_hg.nodeWeight(flow_problem.sink) = whfc::NodeWeight(
       std::max(0, phg.partWeight(block_1) - sub_hg.weight_of_block_1));
-    tbb::parallel_for(UL(0), sub_hg.nodes_of_block_1.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), sub_hg.nodes_of_block_1.size(), [&](const size_t i) {
       const HypernodeID hn = sub_hg.nodes_of_block_1[i];
       const whfc::Node u(flow_problem.sink + 1 + i);
       whfc_to_node[u] = hn;
@@ -246,7 +246,7 @@ FlowProblem ParallelConstruction<GraphAndGainTypes>::constructDefault(const Part
 
   _flow_hg.setNumCSRBuckets(NUM_CSR_BUCKETS);
   const size_t step = max_hyperedges / NUM_CSR_BUCKETS + (max_hyperedges % NUM_CSR_BUCKETS != 0);
-  tbb::parallel_for(UL(0), NUM_CSR_BUCKETS, [&](const size_t idx) {
+  tbb_kahypar::parallel_for(UL(0), NUM_CSR_BUCKETS, [&](const size_t idx) {
     const size_t start = std::min(step * idx, static_cast<size_t>(max_hyperedges));
     const size_t end = std::min(step * (idx + 1), static_cast<size_t>(max_hyperedges));
     const size_t num_hes = end - start;
@@ -326,7 +326,7 @@ FlowProblem ParallelConstruction<GraphAndGainTypes>::constructDefault(const Part
     }
   });
 
-  tbb::parallel_for(UL(0), NUM_CSR_BUCKETS, [&](const size_t idx) {
+  tbb_kahypar::parallel_for(UL(0), NUM_CSR_BUCKETS, [&](const size_t idx) {
     _flow_hg.finalizeCSRBucket(idx);
   });
   _flow_hg.finalizeHyperedges();
@@ -346,10 +346,10 @@ FlowProblem ParallelConstruction<GraphAndGainTypes>::constructOptimizedForLargeH
   flow_problem.non_removable_cut = 0;
   _node_to_whfc.clear();
 
-  tbb::parallel_invoke([&]() {
+  tbb_kahypar::parallel_invoke([&]() {
     _he_to_whfc.clear();
     _he_to_whfc.setMaxSize(sub_hg.hes.size());
-    tbb::parallel_for(UL(0), sub_hg.hes.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), sub_hg.hes.size(), [&](const size_t i) {
       const HyperedgeID he = sub_hg.hes[i];
       _he_to_whfc[he] = i;
     });
@@ -369,13 +369,13 @@ FlowProblem ParallelConstruction<GraphAndGainTypes>::constructOptimizedForLargeH
   const size_t num_buckets = _pins.numBuckets();
   const HyperedgeID max_hyperedges = sub_hg.hes.size();
   const size_t hes_per_bucket = max_hyperedges / num_buckets + (max_hyperedges % num_buckets != 0);
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     // Add source nodes
     flow_problem.source = whfc::Node(0);
     whfc_to_node[flow_problem.source] = kInvalidHypernode;
     _flow_hg.nodeWeight(flow_problem.source) = whfc::NodeWeight(
       std::max(0, phg.partWeight(block_0) - sub_hg.weight_of_block_0));
-    tbb::parallel_for(UL(0), sub_hg.nodes_of_block_0.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), sub_hg.nodes_of_block_0.size(), [&](const size_t i) {
       const HypernodeID hn = sub_hg.nodes_of_block_0[i];
       const whfc::Node u(1 + i);
       whfc_to_node[u] = hn;
@@ -392,7 +392,7 @@ FlowProblem ParallelConstruction<GraphAndGainTypes>::constructOptimizedForLargeH
     whfc_to_node[flow_problem.sink] = kInvalidHypernode;
     _flow_hg.nodeWeight(flow_problem.sink) = whfc::NodeWeight(
       std::max(0, phg.partWeight(block_1) - sub_hg.weight_of_block_1));
-    tbb::parallel_for(UL(0), sub_hg.nodes_of_block_1.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), sub_hg.nodes_of_block_1.size(), [&](const size_t i) {
       const HypernodeID hn = sub_hg.nodes_of_block_1[i];
       const whfc::Node u(flow_problem.sink + 1 + i);
       whfc_to_node[u] = hn;
@@ -516,7 +516,7 @@ FlowProblem ParallelConstruction<GraphAndGainTypes>::constructOptimizedForLargeH
     _pins.clear(idx);
   });
 
-  tbb::parallel_for(UL(0), num_buckets, [&](const size_t idx) {
+  tbb_kahypar::parallel_for(UL(0), num_buckets, [&](const size_t idx) {
     _flow_hg.finalizeCSRBucket(idx);
   });
   _flow_hg.finalizeHyperedges();
@@ -584,8 +584,8 @@ void ParallelConstruction<GraphAndGainTypes>::determineDistanceFromCut(const Par
 
   const size_t num_threads = std::thread::hardware_concurrency();
   vec<BFSQueue<whfc::Node>> q(2, BFSQueue<whfc::Node>(num_threads));
-  tbb::parallel_for(UL(0), _cut_hes.size(), [&](const size_t i) {
-    const int thread_idx = tbb::this_task_arena::current_thread_index();
+  tbb_kahypar::parallel_for(UL(0), _cut_hes.size(), [&](const size_t i) {
+    const int thread_idx = tbb_kahypar::this_task_arena::current_thread_index();
     const whfc::Hyperedge he = _flow_hg.originalHyperedgeID(_cut_hes[i].bucket, _cut_hes[i].e);
     for ( const whfc::FlowHypergraph::Pin& pin : _flow_hg.pinsOf(he) ) {
       if ( _visited_hns.compare_and_set_to_true(pin.pin) ) {
@@ -602,7 +602,7 @@ void ParallelConstruction<GraphAndGainTypes>::determineDistanceFromCut(const Par
   while ( !q[q_idx].empty() ) {
     bool reached_source_side = false;
     bool reached_sink_side = false;
-    tbb::parallel_for(UL(0), num_threads, [&](const size_t idx) {
+    tbb_kahypar::parallel_for(UL(0), num_threads, [&](const size_t idx) {
       while ( !q[q_idx].empty(idx) ) {
         whfc::Node u = q[q_idx].front(idx);
         q[q_idx].pop(idx);

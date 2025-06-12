@@ -183,7 +183,7 @@ private:
   double _reciprocal_total_volume = 0.0;
   double _vol_multiplier_div_by_node_vol = 0.0;
   vec<parallel::AtomicWrapper<ArcWeight>> _cluster_volumes;
-  tbb::enumerable_thread_specific<ClearList> non_sampling_incident_cluster_weights;
+  tbb_kahypar::enumerable_thread_specific<ClearList> non_sampling_incident_cluster_weights;
   const bool _disable_randomization;
 
   utils::ParallelPermutation<HypernodeID> permutation;

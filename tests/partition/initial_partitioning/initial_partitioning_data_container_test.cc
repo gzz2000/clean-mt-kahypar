@@ -28,7 +28,7 @@
 
 #include <atomic>
 
-#include <tbb/parallel_invoke.h>
+#include <tbb_kahypar/parallel_invoke.h>
 
 #include "tests/datastructures/hypergraph_fixtures.h"
 #include "mt-kahypar/definitions.h"
@@ -374,7 +374,7 @@ TEST_F(AInitialPartitioningDataContainer, AppliesBestPartitionToHypergraphInPara
     partitioned_hypergraph, context, true);
 
   std::atomic<size_t> cnt(0);
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     ++cnt;
     while(cnt < 2) { }
     PartitionedHypergraph& local_hg = ip_data.local_partitioned_hypergraph();
@@ -421,7 +421,7 @@ TEST_F(AInitialPartitioningDataContainer, AppliesBestPartitionToHypergraphInPara
     partitioned_hypergraph, context, true);
 
   std::atomic<size_t> cnt(0);
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     ++cnt;
     while(cnt < 2) { }
     PartitionedHypergraph& local_hg = ip_data.local_partitioned_hypergraph();
@@ -468,7 +468,7 @@ TEST_F(AInitialPartitioningDataContainer, AppliesBestPartitionToHypergraphInPara
     partitioned_hypergraph, context, true);
 
   std::atomic<size_t> cnt(0);
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     ++cnt;
     while(cnt < 2) { }
     PartitionedHypergraph& local_hg = ip_data.local_partitioned_hypergraph();

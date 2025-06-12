@@ -29,9 +29,9 @@
 
 #include <cstddef>
 
-#include <tbb/enumerable_thread_specific.h>
-#include <tbb/parallel_invoke.h>
-#include <tbb/parallel_scan.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
+#include <tbb_kahypar/parallel_invoke.h>
+#include <tbb_kahypar/parallel_scan.h>
 
 #include "kahypar-resources/datastructure/fast_reset_flag_array.h"
 
@@ -93,7 +93,7 @@ class IncidentNetIterator {
 class IncidentNetArray {
 
   using HyperedgeVector = parallel::scalable_vector<parallel::scalable_vector<HypernodeID>>;
-  using ThreadLocalCounter = tbb::enumerable_thread_specific<parallel::scalable_vector<size_t>>;
+  using ThreadLocalCounter = tbb_kahypar::enumerable_thread_specific<parallel::scalable_vector<size_t>>;
   using AtomicCounter = parallel::scalable_vector<parallel::IntegralAtomicWrapper<size_t>>;
 
   using AcquireLockFunc = std::function<void (const HypernodeID)>;

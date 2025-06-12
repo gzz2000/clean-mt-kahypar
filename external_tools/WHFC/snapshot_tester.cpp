@@ -7,7 +7,7 @@
 #include "io/hmetis_io.h"
 #include "io/whfc_io.h"
 
-#include <tbb/global_control.h>
+#include <tbb_kahypar/global_control.h>
 #include "util/tbb_thread_pinning.h"
 
 namespace whfc {
@@ -47,7 +47,7 @@ namespace whfc {
 
         // for (size_t threads = 32; threads <= 32; threads *= 2) {
         size_t threads = max_threads;
-        auto gc = tbb::global_control{ tbb::global_control::max_allowed_parallelism, threads };
+        auto gc = tbb_kahypar::global_control{ tbb_kahypar::global_control::max_allowed_parallelism, threads };
         whfc::pinning_observer thread_pinner;
         thread_pinner.observe(true);
 

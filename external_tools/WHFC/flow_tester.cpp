@@ -2,7 +2,7 @@
 #include "io/hmetis_io.h"
 #include "io/whfc_io.h"
 
-#include <tbb/global_control.h>
+#include <tbb_kahypar/global_control.h>
 #include "util/tbb_thread_pinning.h"
 
 #include "algorithm/parallel_push_relabel.h"
@@ -56,7 +56,7 @@ namespace whfc {
         unpin();
 
         for (int threads = 32; threads <= 32; threads *= 2) {
-            auto gc = tbb::global_control{ tbb::global_control::max_allowed_parallelism, threads };
+            auto gc = tbb_kahypar::global_control{ tbb_kahypar::global_control::max_allowed_parallelism, threads };
             whfc::pinning_observer thread_pinner;
             thread_pinner.observe(true);
             for (int i = 0; i < 1; ++i) {
@@ -103,7 +103,7 @@ int main(int argc, const char* argv[]) {
     if (argc == 3)
         threads = std::stoi(argv[2]);
     /*
-    tbb::task_scheduler_init tsi(threads);
+    tbb_kahypar::task_scheduler_init tsi(threads);
     whfc::pinning_observer thread_pinner;
     if (argc == 3)
         thread_pinner.observe(true);

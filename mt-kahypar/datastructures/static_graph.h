@@ -30,7 +30,7 @@
 
 #include <boost_kahypar/range/irange.hpp>
 
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/parallel_for.h>
 
 #include "include/mtkahypartypes.h"
 
@@ -407,7 +407,7 @@ class StaticGraph {
   struct TmpContractionBuffer {
     explicit TmpContractionBuffer(const HypernodeID num_nodes,
                                   const HyperedgeID num_edges) {
-      tbb::parallel_invoke([&] {
+      tbb_kahypar::parallel_invoke([&] {
         mapping.resize("Coarsening", "mapping", num_nodes);
       }, [&] {
         tmp_nodes.resize("Coarsening", "tmp_nodes", num_nodes);
@@ -564,7 +564,7 @@ class StaticGraph {
   // ! for each vertex
   template<typename F>
   void doParallelForAllNodes(const F& f) const {
-    tbb::parallel_for(ID(0), _num_nodes, [&](const HypernodeID& hn) {
+    tbb_kahypar::parallel_for(ID(0), _num_nodes, [&](const HypernodeID& hn) {
       if ( nodeIsEnabled(hn) ) {
         f(hn);
       }
@@ -575,7 +575,7 @@ class StaticGraph {
   // ! for each net
   template<typename F>
   void doParallelForAllEdges(const F& f) const {
-    tbb::parallel_for(ID(0), _num_edges, [&](const HyperedgeID& e) {
+    tbb_kahypar::parallel_for(ID(0), _num_edges, [&](const HyperedgeID& e) {
       f(e);
     });
   }

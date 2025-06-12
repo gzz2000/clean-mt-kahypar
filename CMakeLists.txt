@@ -84,13 +84,11 @@ endif()
 # general build options
 option(KAHYPAR_PYTHON "Include the Python interface in the build." OFF)
 option(KAHYPAR_ENABLE_TESTING "Enables tests, which requires dowloading googletest." OFF)
-option(KAHYPAR_STATIC_LINK_DEPENDENCIES "In static build, also link dependencies (other than TBB) statically." OFF)
-option(KAHYPAR_STATIC_LINK_TBB "In static build, also link TBB statically. Note that this is not officially supported!" OFF)
+option(KAHYPAR_STATIC_LINK_DEPENDENCIES "In static build, also link dependencies statically." OFF)
 option(KAHYPAR_INSTALL_CLI "Provide a target to install an executable binary `mtkahypar`." OFF)
 option(KAHYPAR_BUILD_DEBIAN_PACKAGE "Provide a target to build a debian package." OFF)
 
 # dependencies
-option(KAHYPAR_DOWNLOAD_TBB "Download TBB automatically." OFF)
 option(KAHYPAR_DISABLE_HWLOC "Exclude components requiring hwloc. Might impact performance on NUMA platforms." OFF)
 
 # specific compile features/build properties
@@ -255,7 +253,7 @@ include(FetchContent)
 set(KAHYPAR_SHARED_RESOURCES_TAG 6d5c8e2444e4310667ec1925e995f26179d7ee88)
 set(KAHYPAR_WHFC_TAG             30b0eeb0e49577d06c3deb09a44b035d81c529d2)
 set(KAHYPAR_GROWT_TAG            0c1148ebcdfd4c04803be79706533ad09cc81d37)
-set(KAHYPAR_TBB_VERSION          v2022.0.0)
+# set(KAHYPAR_TBB_VERSION          v2022.0.0)
 set(KAHYPAR_GOOGLETEST_VERSION   v1.15.2)
 set(KAHYPAR_PYBIND11_VERSION     v2.13.6)
 
@@ -269,11 +267,12 @@ if (KAHYPAR_ENABLE_TESTING)
   message(STATUS "Fetching test dependencies...")
 
   FetchContent_Declare(
-    googletest EXCLUDE_FROM_ALL SYSTEM
+    googletest
     GIT_REPOSITORY https://github.com/google/googletest.git
     GIT_TAG        ${KAHYPAR_GOOGLETEST_VERSION}
   )
   FetchContent_MakeAvailable(googletest)
+
   include(gmock)
   enable_testing()
 
@@ -313,35 +312,8 @@ endif()
 add_subdirectory(external_tools/boost_kahypar)
 target_link_libraries(MtKaHyPar-Include INTERFACE BoostKaHyPar)
 
-if(KAHYPAR_DOWNLOAD_TBB)
-  # Download TBB library
-  FetchContent_Declare(
-    TBB EXCLUDE_FROM_ALL SYSTEM
-    GIT_REPOSITORY https://github.com/oneapi-src/oneTBB.git
-    GIT_TAG        ${KAHYPAR_TBB_VERSION}
-    GIT_SHALLOW    FALSE  # TBB seems to assume that a git repo is present
-  )
-  block()
-    if(KAHYPAR_STATIC_LINK_TBB)
-      set(BUILD_SHARED_LIBS OFF)
-    else()
-      set(BUILD_SHARED_LIBS ON)
-    endif()
-    FetchContent_MakeAvailable(TBB)
-  endblock()
-else()
-  # Find system TBB library
-  find_package(TBB 2021.5 COMPONENTS tbb tbbmalloc)
-  if(NOT TBB_FOUND)
-    message(FATAL_ERROR "
-      TBB library not found or current TBB version is too old. Install TBB on your system
-      or add -DKAHYPAR_DOWNLOAD_TBB=On to the cmake build command.")
-  endif()
-  get_target_property(KAHYPAR_TBB_INCLUDE_DIRS TBB::tbb INTERFACE_INCLUDE_DIRECTORIES)
-  message(STATUS "TBB Version: ${TBB_VERSION_MAJOR}.${TBB_VERSION_MINOR}, TBB Include: ${KAHYPAR_TBB_INCLUDE_DIRS}")
-endif()
-target_link_libraries(MtKaHyPar-Include INTERFACE TBB::tbb TBB::tbbmalloc)
-
+add_subdirectory(external_tools/tbb_kahypar)
+target_link_libraries(MtKaHyPar-Include INTERFACE TBBKaHyPar TBBMallocKaHyPar)
 
 # Find HWLOC Library
 if(NOT KAHYPAR_DISABLE_HWLOC)
@@ -394,10 +366,7 @@ endif()
 if (KAHYPAR_X86 AND KAHYPAR_ENABLE_EXTENDED_INSTRUCTIONS)
   include(CheckCXXCompilerFlag)
   include(CheckSSE4_2)
-  block()
-    set(CMAKE_REQUIRED_QUIET TRUE)
-    check_cxx_compiler_flag(-mcrc32 KAHYPAR_HAS_CRC32)
-  endblock()
+  check_cxx_compiler_flag(-mcrc32 KAHYPAR_HAS_CRC32)
 
   target_compile_options(MtKaHyPar-BuildFlags INTERFACE -mcx16)
   if(KAHYPAR_HAS_CRC32)
@@ -484,22 +453,16 @@ if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_CURRENT_SOURCE_DIR})
     include(SetupCPack)
   endif()
 
-  if(KAHYPAR_SETUP_PYTHON AND DEFINED KAHYPAR_TBB_DIR)
+  if(KAHYPAR_SETUP_PYTHON)
     # preparation for python wheel
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml.in ${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml @ONLY)
   endif()
   if(KAHYPAR_PYTHON AND DEFINED SKBUILD_PROJECT_NAME)
     # build python wheel
-    if(NOT KAHYPAR_DOWNLOAD_TBB OR NOT DEFINED KAHYPAR_TBB_DIR)
-      message(FATAL_ERROR "TBB must be built from source for python wheel and KAHYPAR_TBB_DIR must be specified.")
-    endif()
-    message(STATUS "Python wheel build enabled, installing TBB to ${KAHYPAR_TBB_DIR}")
+    message(STATUS "Python wheel build enabled")
 
     install(TARGETS mtkahypar_python
       DESTINATION .
-      COMPONENT MtKaHyPar_Python)
-    install(TARGETS tbb tbbmalloc
-      DESTINATION ${KAHYPAR_TBB_DIR}
       COMPONENT MtKaHyPar_Python)
   endif()
 endif()

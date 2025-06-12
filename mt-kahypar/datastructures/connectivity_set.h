@@ -32,7 +32,7 @@
 #include <limits>
 #include <cassert>
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/parallel/stl/scalable_vector.h"
 #include "mt-kahypar/datastructures/array.h"
@@ -126,7 +126,7 @@ public:
 
   void reset(const bool reset_parallel = false) {
     if ( reset_parallel ) {
-      tbb::parallel_for(UL(0), _bits.size(), [&](const size_t i) {
+      tbb_kahypar::parallel_for(UL(0), _bits.size(), [&](const size_t i) {
         __atomic_store_n(&_bits[i], 0, __ATOMIC_RELAXED);
       });
     } else {
@@ -192,8 +192,8 @@ private:
 	Array<UnsafeBlock> _bits;
 
   // Bitsets to create shallow and deep copies of the connectivity set
-  mutable tbb::enumerable_thread_specific<Bitset> _deep_copy_bitset;
-  mutable tbb::enumerable_thread_specific<StaticBitset> _shallow_copy_bitset;
+  mutable tbb_kahypar::enumerable_thread_specific<Bitset> _deep_copy_bitset;
+  mutable tbb_kahypar::enumerable_thread_specific<StaticBitset> _shallow_copy_bitset;
 };
 
 

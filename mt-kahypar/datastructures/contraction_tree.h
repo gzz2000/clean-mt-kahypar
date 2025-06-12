@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/parallel_for.h>
 
 #include "mt-kahypar/parallel/stl/scalable_vector.h"
 #include "mt-kahypar/parallel/atomic_wrapper.h"
@@ -121,7 +121,7 @@ class BatchIndexAssigner {
   void reset(const size_t num_batches) {
     ASSERT(num_batches <= _current_batch_sizes.size());
     _high_water_mark = 0;
-    tbb::parallel_for(UL(0), num_batches, [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), num_batches, [&](const size_t i) {
       _current_batch_counter[i] = 0;
       _current_batch_sizes[i] = 0;
     });

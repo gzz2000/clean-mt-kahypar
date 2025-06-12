@@ -32,7 +32,7 @@
 #include <type_traits>
 #include <mutex>
 
-#include <tbb/parallel_invoke.h>
+#include <tbb_kahypar/parallel_invoke.h>
 
 #include "kahypar-resources/meta/mandatory.h"
 
@@ -208,7 +208,7 @@ private:
     _edge_sync(),
     _edge_locks(),
     _edge_markers() {
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       _part_ids.resize(
         "Refinement", "part_ids", hypergraph.initialNumNodes());
       _part_ids.assign(hypergraph.initialNumNodes(), kInvalidPartition);
@@ -238,7 +238,7 @@ private:
   }
 
   void resetData() {
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
     }, [&] {
       _part_ids.assign(_part_ids.size(), kInvalidPartition);
     }, [&] {
@@ -457,7 +457,7 @@ private:
   template<typename GainCache>
   void uncontract(const Batch& batch, GainCache& gain_cache) {
     // Set block ids of contraction partners
-    tbb::parallel_for(UL(0), batch.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), batch.size(), [&](const size_t i) {
       const Memento& memento = batch[i];
       ASSERT(nodeIsEnabled(memento.u));
       ASSERT(!nodeIsEnabled(memento.v));
@@ -478,7 +478,7 @@ private:
       });
 
     if constexpr ( GainCache::initializes_gain_cache_entry_after_batch_uncontractions ) {
-      tbb::parallel_for(UL(0), batch.size(), [&](const size_t i) {
+      tbb_kahypar::parallel_for(UL(0), batch.size(), [&](const size_t i) {
         const Memento& memento = batch[i];
         gain_cache.initializeGainCacheEntryForNode(*this, memento.v);
       });
@@ -499,7 +499,7 @@ private:
     _edge_markers.reset();
     _hg->restoreSinglePinAndParallelNets(hes_to_restore);
 
-    tbb::parallel_for(UL(0), hes_to_restore.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), hes_to_restore.size(), [&](const size_t i) {
       const HyperedgeID he = hes_to_restore[i].old_id;
       ASSERT(edgeIsEnabled(he));
       const bool is_single_pin_he = edgeSize(he) == 1;
@@ -535,7 +535,7 @@ private:
       std::swap(_part_ids, part_ids);
     } else {
       ASSERT(part_ids.size() <= _part_ids.size());
-      tbb::parallel_for(UL(0), part_ids.size(), [&](const size_t i) {
+      tbb_kahypar::parallel_for(UL(0), part_ids.size(), [&](const size_t i) {
         part_ids[i] = _part_ids[i];
       });
     }
@@ -841,7 +841,7 @@ private:
     vec<HyperedgeID> he_mapping(_hg->initialNumEdges(), kInvalidHyperedge);
     HypernodeID num_nodes = 0;
     HypernodeID num_edges = 0;
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       for (const HypernodeID& node : nodes()) {
         if (partID(node) == block) {
           node_mapping[node] = num_nodes++;
@@ -862,7 +862,7 @@ private:
     EdgeVector edge_vector;
     vec<HyperedgeWeight> edge_weight;
     vec<HypernodeWeight> node_weight;
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       edge_vector.resize(num_edges);
       edge_weight.resize(num_edges);
       doParallelForAllEdges([&](const HyperedgeID edge) {
@@ -925,7 +925,7 @@ private:
     if ( stable_construction_of_incident_edges ) {
       // Stable construction for deterministic behavior requires
       // to determine node and edge IDs sequentially
-      tbb::parallel_invoke([&] {
+      tbb_kahypar::parallel_invoke([&] {
         for ( const HypernodeID& hn : nodes() ) {
           const PartitionID block = partID(hn);
           if ( block < k ) {
@@ -944,7 +944,7 @@ private:
         }
       });
     } else {
-      tbb::parallel_invoke([&] {
+      tbb_kahypar::parallel_invoke([&] {
         doParallelForAllNodes([&](const HypernodeID& hn) {
           const PartitionID block = partID(hn);
           if ( block < k ) {
@@ -970,10 +970,10 @@ private:
     vec<vec<HyperedgeWeight>> edge_weight(k);
     vec<vec<HypernodeWeight>> node_weight(k);
     // Allocate auxilliary graph data structures
-    tbb::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
+    tbb_kahypar::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
       const HypernodeID num_nodes = nodes_cnt[p];
       const HyperedgeID num_edges = edges_cnt[p];
-      tbb::parallel_invoke([&] {
+      tbb_kahypar::parallel_invoke([&] {
         edge_vector[p].resize(num_edges);
       }, [&] {
         edge_weight[p].resize(num_edges);
@@ -988,7 +988,7 @@ private:
     });
 
     // Write blocks to auxilliary graph data structure
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       doParallelForAllEdges([&](const HyperedgeID& he) {
         const HyperedgeID mapped_he = he_mapping[he];
         const HypernodeID source = edgeSource(he);
@@ -1014,7 +1014,7 @@ private:
     });
 
     // Construct graph of each block
-    tbb::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
+    tbb_kahypar::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
       const HypernodeID num_nodes = nodes_cnt[p];
       const HyperedgeID num_edges = edges_cnt[p];
       extracted_blocks[p].hg = HypergraphFactory::construct_from_graph_edges(
@@ -1089,8 +1089,8 @@ private:
   }
 
   void initializeBlockWeights() {
-    tbb::parallel_for(tbb::blocked_range<HypernodeID>(HypernodeID(0), initialNumNodes()),
-      [&](tbb::blocked_range<HypernodeID>& r) {
+    tbb_kahypar::parallel_for(tbb_kahypar::blocked_range<HypernodeID>(HypernodeID(0), initialNumNodes()),
+      [&](tbb_kahypar::blocked_range<HypernodeID>& r) {
         // this is not enumerable_thread_specific because of the static partitioner
         parallel::scalable_vector<HypernodeWeight> part_weight_deltas(_k, 0);
         for (HypernodeID node = r.begin(); node < r.end(); ++node) {
@@ -1102,7 +1102,7 @@ private:
           _part_weights[p].fetch_add(part_weight_deltas[p], std::memory_order_relaxed);
         }
       },
-      tbb::static_partitioner()
+      tbb_kahypar::static_partitioner()
     );
   }
 
@@ -1191,8 +1191,8 @@ private:
   // ! Bitsets to create shallow and deep copies of the connectivity set
   // ! They are only required to implement the same interface of our hypergraph
   // ! data structure but should not be required in practice.
-  mutable tbb::enumerable_thread_specific<Bitset> _deep_copy_bitset;
-  mutable tbb::enumerable_thread_specific<StaticBitset> _shallow_copy_bitset;
+  mutable tbb_kahypar::enumerable_thread_specific<Bitset> _deep_copy_bitset;
+  mutable tbb_kahypar::enumerable_thread_specific<StaticBitset> _shallow_copy_bitset;
 };
 
 } // namespace ds

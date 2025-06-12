@@ -46,7 +46,7 @@
 #endif
 
 
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/parallel_for.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/partition/context_enum_classes.h"
@@ -271,7 +271,7 @@ namespace mt_kahypar::io {
                                        true : false;
 
     vec<HyperedgeRange> hyperedge_ranges;
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       // Sequential pass over all hyperedges to determine ranges in the
       // input file that are read in parallel.
       size_t current_range_start = pos;
@@ -327,7 +327,7 @@ namespace mt_kahypar::io {
     }
 
     // Process all ranges in parallel and build hyperedge vector
-    tbb::parallel_for(UL(0), hyperedge_ranges.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), hyperedge_ranges.size(), [&](const size_t i) {
       HyperedgeRange& range = hyperedge_ranges[i];
       size_t current_pos = range.start;
       const size_t current_end = range.end;
@@ -494,7 +494,7 @@ namespace mt_kahypar::io {
                     vec<HyperedgeWeight>& edges_weight,
                     vec<HypernodeWeight>& vertices_weight) {
     vec<VertexRange> vertex_ranges;
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       // Sequential pass over all vertices to determine ranges in the
       // input file that are read in parallel.
       // Additionally, we need to sum the vertex degrees to determine edge indices.
@@ -582,7 +582,7 @@ namespace mt_kahypar::io {
     );
 
     // Process all ranges in parallel, build edge vector and assign weights
-    tbb::parallel_for(UL(0), vertex_ranges.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), vertex_ranges.size(), [&](const size_t i) {
       const VertexRange& range = vertex_ranges[i];
       size_t current_pos = range.start;
       const size_t current_end = range.end;

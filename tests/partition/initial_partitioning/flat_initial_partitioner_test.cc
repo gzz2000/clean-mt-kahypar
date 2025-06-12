@@ -28,7 +28,7 @@
 
 #include <atomic>
 
-#include <tbb/parallel_invoke.h>
+#include <tbb_kahypar/parallel_invoke.h>
 
 #include "tests/datastructures/hypergraph_fixtures.h"
 #include "mt-kahypar/utils/utilities.h"
@@ -90,7 +90,7 @@ class AFlatInitialPartitionerTest : public Test {
 
   void execute() {
     ip_data = std::make_unique<InitialPartitioningDataContainer<TypeTraits>>(partitioned_hypergraph, context);
-    tbb::task_group tg;
+    tbb_kahypar::task_group tg;
     const int seed = 420;
     ip_data_container_t* ip_data_ptr = ip::to_pointer(*ip_data);
     for ( size_t i = 0; i < Config::RUNS; ++i ) {

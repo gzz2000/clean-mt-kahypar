@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/partition/context.h"
 
@@ -125,7 +125,7 @@ class MultiTryKWayFM final : public IRefiner {
   FMSharedData sharedData;
   std::unique_ptr<IFMStrategy> fm_strategy;
   Rollback globalRollback;
-  tbb::enumerable_thread_specific<LocalizedFMSearch> ets_fm;
+  tbb_kahypar::enumerable_thread_specific<LocalizedFMSearch> ets_fm;
   vec<Move> tmp_move_order;
   IRebalancer& rebalancer;
 };

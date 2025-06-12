@@ -32,8 +32,8 @@
 #include "mt-kahypar/parallel/parallel_counting_sort.h"
 #include "mt-kahypar/utils/cast.h"
 
-#include <tbb/parallel_sort.h>
-#include <tbb/parallel_reduce.h>
+#include <tbb_kahypar/parallel_sort.h>
+#include <tbb_kahypar/parallel_reduce.h>
 
 namespace mt_kahypar {
 
@@ -63,7 +63,7 @@ namespace mt_kahypar {
       if (!context.refinement.deterministic_refinement.use_active_node_set || iter == 0 || active_nodes.size() == 0) {
         permutation.random_grouping(phg.initialNumNodes(), context.shared_memory.static_balancing_work_packages,prng());
       } else {
-        tbb::parallel_sort(active_nodes.begin(), active_nodes.end());
+        tbb_kahypar::parallel_sort(active_nodes.begin(), active_nodes.end());
         permutation.sample_buckets_and_group_by(active_nodes.range(),
                                                 context.shared_memory.static_balancing_work_packages, prng());
       }
@@ -80,7 +80,7 @@ namespace mt_kahypar {
         moves.clear();
 
         // calculate moves
-        tbb::parallel_for(HypernodeID(first), HypernodeID(last), [&](const HypernodeID position) {
+        tbb_kahypar::parallel_for(HypernodeID(first), HypernodeID(last), [&](const HypernodeID position) {
           ASSERT(position < permutation.permutation.size());
           const HypernodeID u = permutation.at(position);
           ASSERT(u < phg.initialNumNodes());
@@ -162,8 +162,8 @@ namespace mt_kahypar {
   template<typename Predicate>
   Gain DeterministicLabelPropagationRefiner<GraphAndGainTypes>::applyMovesIf(
           PartitionedHypergraph& phg, const vec<Move>& my_moves, size_t end, Predicate&& predicate) {
-    auto range = tbb::blocked_range<size_t>(UL(0), end);
-    auto accum = [&](const tbb::blocked_range<size_t>& r, const Gain& init) -> Gain {
+    auto range = tbb_kahypar::blocked_range<size_t>(UL(0), end);
+    auto accum = [&](const tbb_kahypar::blocked_range<size_t>& r, const Gain& init) -> Gain {
       Gain my_gain = init;
       for (size_t i = r.begin(); i < r.end(); ++i) {
         if (predicate(i)) {
@@ -172,22 +172,22 @@ namespace mt_kahypar {
       }
       return my_gain;
     };
-    return tbb::parallel_reduce(range, 0, accum, std::plus<>());
+    return tbb_kahypar::parallel_reduce(range, 0, accum, std::plus<>());
   }
 
   template<typename PartitionedHypergraph>
   vec<HypernodeWeight> aggregatePartWeightDeltas(PartitionedHypergraph& phg, PartitionID current_k, const vec<Move>& moves, size_t end) {
     // parallel reduce makes way too many vector copies
-    tbb::enumerable_thread_specific<vec< HypernodeWeight>>
+    tbb_kahypar::enumerable_thread_specific<vec< HypernodeWeight>>
     ets_part_weight_diffs(current_k, 0);
-    auto accum = [&](const tbb::blocked_range<size_t>& r) {
+    auto accum = [&](const tbb_kahypar::blocked_range<size_t>& r) {
       auto& part_weights = ets_part_weight_diffs.local();
       for (size_t i = r.begin(); i < r.end(); ++i) {
         part_weights[moves[i].from] -= phg.nodeWeight(moves[i].node);
         part_weights[moves[i].to] += phg.nodeWeight(moves[i].node);
       }
     };
-    tbb::parallel_for(tbb::blocked_range<size_t>(UL(0), end), accum);
+    tbb_kahypar::parallel_for(tbb_kahypar::blocked_range<size_t>(UL(0), end), accum);
     vec<HypernodeWeight> res(current_k, 0);
     auto combine = [&](const vec<HypernodeWeight>& a) {
       for (size_t i = 0; i < res.size(); ++i) {
@@ -201,7 +201,7 @@ namespace mt_kahypar {
   template<typename GraphAndGainTypes>
   Gain DeterministicLabelPropagationRefiner<GraphAndGainTypes>::applyMovesSortedByGainAndRevertUnbalanced(PartitionedHypergraph& phg) {
     const size_t num_moves = moves.size();
-    tbb::parallel_sort(moves.begin(), moves.begin() + num_moves, [](const Move& m1, const Move& m2) {
+    tbb_kahypar::parallel_sort(moves.begin(), moves.begin() + num_moves, [](const Move& m1, const Move& m2) {
       return m1.gain > m2.gain || (m1.gain == m2.gain && m1.node < m2.node);
     });
 
@@ -328,15 +328,15 @@ namespace mt_kahypar {
 
     // swap_prefix[index(p1,p2)] stores the first position of moves to revert out of the sequence of moves from p1 to p2
     vec<size_t> swap_prefix(max_key, 0);
-    tbb::parallel_for(size_t(0), relevant_block_pairs.size(), [&](size_t bp_index) {
+    tbb_kahypar::parallel_for(size_t(0), relevant_block_pairs.size(), [&](size_t bp_index) {
       // sort both directions by gain (alternative: gain / weight?)
       auto sort_by_gain_and_prefix_sum_node_weights = [&](PartitionID p1, PartitionID p2) {
         size_t begin = positions[index(p1, p2)], end = positions[index(p1, p2) + 1];
         auto comp = [&](const Move& m1, const Move& m2) {
           return m1.gain > m2.gain || (m1.gain == m2.gain && m1.node < m2.node);
         };
-        tbb::parallel_sort(sorted_moves.begin() + begin, sorted_moves.begin() + end, comp);
-        tbb::parallel_for(begin, end, [&](size_t pos) {
+        tbb_kahypar::parallel_sort(sorted_moves.begin() + begin, sorted_moves.begin() + end, comp);
+        tbb_kahypar::parallel_for(begin, end, [&](size_t pos) {
           cumulative_node_weights[pos] = phg.nodeWeight(sorted_moves[pos].node);
         });
         parallel_prefix_sum(cumulative_node_weights.begin() + begin, cumulative_node_weights.begin() + end,
@@ -345,7 +345,7 @@ namespace mt_kahypar {
 
       PartitionID p1, p2;
       std::tie(p1, p2) = relevant_block_pairs[bp_index];
-      tbb::parallel_invoke([&] {
+      tbb_kahypar::parallel_invoke([&] {
         sort_by_gain_and_prefix_sum_node_weights(p1, p2);
       }, [&] {
         sort_by_gain_and_prefix_sum_node_weights(p2, p1);
@@ -447,7 +447,7 @@ namespace mt_kahypar {
       }
 
       std::pair<size_t, size_t> left, right;
-      tbb::parallel_invoke([&] {
+      tbb_kahypar::parallel_invoke([&] {
         left = findBestPrefixesRecursive(p1_begin, p1_mid, p2_begin, p2_match, p1_invalid, p2_invalid, lb_p1, ub_p2);
       }, [&] {
         right = findBestPrefixesRecursive(p1_mid, p1_end, p2_match, p2_end, p1_invalid, p2_invalid, lb_p1, ub_p2);
@@ -468,7 +468,7 @@ namespace mt_kahypar {
       }
 
       std::pair<size_t, size_t> left, right;
-      tbb::parallel_invoke([&] {
+      tbb_kahypar::parallel_invoke([&] {
         left = findBestPrefixesRecursive(p1_begin, p1_match, p2_begin, p2_mid, p1_invalid, p2_invalid, lb_p1, ub_p2);
       }, [&] {
         right = findBestPrefixesRecursive(p1_match, p1_end, p2_mid, p2_end, p1_invalid, p2_invalid, lb_p1, ub_p2);

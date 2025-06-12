@@ -33,7 +33,7 @@
 #include <string>
 #include <unordered_map>
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/macros.h"
 
@@ -150,7 +150,7 @@ class Timer {
   };
 
   using ActiveTimingStack = std::vector<ActiveTiming>;
-  using LocalActiveTimingStack = tbb::enumerable_thread_specific<ActiveTimingStack>;
+  using LocalActiveTimingStack = tbb_kahypar::enumerable_thread_specific<ActiveTimingStack>;
 
  public:
   explicit Timer() :

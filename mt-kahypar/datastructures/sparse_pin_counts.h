@@ -27,9 +27,9 @@
 
 #pragma once
 
-#include <tbb/concurrent_vector.h>
-#include <tbb/parallel_for.h>
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/concurrent_vector.h>
+#include <tbb_kahypar/parallel_for.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/macros.h"
 #include "mt-kahypar/datastructures/hypergraph_common.h"
@@ -103,7 +103,7 @@ class SparsePinCounts {
     }
 
     Iterator(const size_t start, const size_t end, const PartitionID k,
-             const tbb::concurrent_vector<PinCountEntry>* data) :
+             const tbb_kahypar::concurrent_vector<PinCountEntry>* data) :
       _cur_entry( { kInvalidPartition, 0 } ),
       _cur(start),
       _end(end),
@@ -169,7 +169,7 @@ class SparsePinCounts {
     const size_t _end;
     const PartitionID _k;
     const PinCountEntry* _pin_count_list;
-    const tbb::concurrent_vector<PinCountEntry>* _ext_pin_count_list;
+    const tbb_kahypar::concurrent_vector<PinCountEntry>* _ext_pin_count_list;
   };
 
   SparsePinCounts() :
@@ -230,7 +230,7 @@ class SparsePinCounts {
     _ext_pin_count_list = std::move(other._ext_pin_count_list);
     _deep_copy_bitset = std::move(other._deep_copy_bitset);
     _shallow_copy_bitset = std::move(other._shallow_copy_bitset);
-    _pin_count_snapshot = tbb::enumerable_thread_specific<PinCountSnapshot>([&] {
+    _pin_count_snapshot = tbb_kahypar::enumerable_thread_specific<PinCountSnapshot>([&] {
         return initPinCountSnapshot();
       });
     return *this;
@@ -392,7 +392,7 @@ class SparsePinCounts {
 
   void reset(const bool assign_parallel = true) {
     if ( assign_parallel ) {
-      tbb::parallel_for(ID(0), _num_hyperedges, [&](const HyperedgeID he) {
+      tbb_kahypar::parallel_for(ID(0), _num_hyperedges, [&](const HyperedgeID he) {
         init_pin_count_of_hyperedge(he);
       });
     } else {
@@ -415,8 +415,8 @@ class SparsePinCounts {
   void memoryConsumption(utils::MemoryTreeNode* parent) const {
     ASSERT(parent);
     parent->addChild("Pin Count Values", sizeof(char) * _pin_count_in_part.size());
-    tbb::enumerable_thread_specific<size_t> ext_pin_count_entries(0);
-    tbb::parallel_for(ID(0), _num_hyperedges, [&](const HyperedgeID he) {
+    tbb_kahypar::enumerable_thread_specific<size_t> ext_pin_count_entries(0);
+    tbb_kahypar::parallel_for(ID(0), _num_hyperedges, [&](const HyperedgeID he) {
       ext_pin_count_entries.local() += _ext_pin_count_list[he].size();
     });
     parent->addChild("External Pin Count Values", sizeof(PinCountEntry) *
@@ -573,12 +573,12 @@ class SparsePinCounts {
   // ! the connectivity becomes larger than c.
   // ! Note that we have to use concurrent_vector since we allow concurrent
   // ! read while modyfing the entries.
-  vec<tbb::concurrent_vector<PinCountEntry>> _ext_pin_count_list;
+  vec<tbb_kahypar::concurrent_vector<PinCountEntry>> _ext_pin_count_list;
 
   // Bitsets to create shallow and deep copies of the connectivity set
-  mutable tbb::enumerable_thread_specific<Bitset> _deep_copy_bitset;
-  mutable tbb::enumerable_thread_specific<StaticBitset> _shallow_copy_bitset;
-  mutable tbb::enumerable_thread_specific<PinCountSnapshot> _pin_count_snapshot;
+  mutable tbb_kahypar::enumerable_thread_specific<Bitset> _deep_copy_bitset;
+  mutable tbb_kahypar::enumerable_thread_specific<StaticBitset> _shallow_copy_bitset;
+  mutable tbb_kahypar::enumerable_thread_specific<PinCountSnapshot> _pin_count_snapshot;
 };
 }  // namespace ds
 }  // namespace mt_kahypar

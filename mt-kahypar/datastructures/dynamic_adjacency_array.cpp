@@ -148,8 +148,8 @@ void DynamicAdjacencyArray::construct(const EdgeVector& edge_vector, const Hyper
   ThreadLocalCounter local_incident_nets_per_vertex(_num_nodes + 1, 0);
   Array<HyperedgeID> node_degrees;
   AtomicCounter current_incident_net_pos;
-  tbb::parallel_invoke([&] {
-    tbb::parallel_for(ID(0), num_edges, [&](const size_t pos) {
+  tbb_kahypar::parallel_invoke([&] {
+    tbb_kahypar::parallel_for(ID(0), num_edges, [&](const size_t pos) {
       parallel::scalable_vector<size_t>& num_incident_nets_per_vertex =
         local_incident_nets_per_vertex.local();
         ++num_incident_nets_per_vertex[edge_vector[pos].first];
@@ -174,18 +174,18 @@ void DynamicAdjacencyArray::construct(const EdgeVector& edge_vector, const Hyper
   // To obtain the global number of incident nets per vertex, we iterate
   // over each thread local counter and sum it up.
   for ( const parallel::scalable_vector<size_t>& c : local_incident_nets_per_vertex ) {
-    tbb::parallel_for(ID(0), _num_nodes, [&](const size_t pos) {
+    tbb_kahypar::parallel_for(ID(0), _num_nodes, [&](const size_t pos) {
       node_degrees[pos] += c[pos];
     });
   }
 
   // Compute start positon of the incident nets of each vertex via a parallel prefix sum
   parallel::TBBPrefixSum<HyperedgeID, Array> incident_net_prefix_sum(node_degrees);
-  tbb::parallel_scan(tbb::blocked_range<size_t>(
+  tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(
           ID(0), ID(_num_nodes)), incident_net_prefix_sum);
 
   // Setup Header of each vertex
-  tbb::parallel_for(ID(0), _num_nodes + 1, [&](const HypernodeID u) {
+  tbb_kahypar::parallel_for(ID(0), _num_nodes + 1, [&](const HypernodeID u) {
     Header& head = header(u);
     head.prev = u;
     head.next = u;
@@ -199,7 +199,7 @@ void DynamicAdjacencyArray::construct(const EdgeVector& edge_vector, const Hyper
   });
 
   // Insert incident nets into incidence array
-  tbb::parallel_for(ID(0), num_edges, [&](const HyperedgeID he) {
+  tbb_kahypar::parallel_for(ID(0), num_edges, [&](const HyperedgeID he) {
     HypernodeID source = edge_vector[he].first;
     HypernodeID target = edge_vector[he].second;
     const HyperedgeWeight weight = edge_weight == nullptr ? 1 : edge_weight[he];
@@ -320,7 +320,7 @@ parallel::scalable_vector<DynamicAdjacencyArray::RemovedEdge> DynamicAdjacencyAr
 
   // Step one: We mark each edge that should be removed and
   // update the weight of the representative edges.
-  tbb::parallel_for(ID(0), _num_nodes, [&](const HypernodeID u) {
+  tbb_kahypar::parallel_for(ID(0), _num_nodes, [&](const HypernodeID u) {
     if (header(u).is_head) {
       vec<ParallelEdgeInformation>& local_vec = _thread_local_vec.local();
       local_vec.clear();
@@ -368,7 +368,7 @@ parallel::scalable_vector<DynamicAdjacencyArray::RemovedEdge> DynamicAdjacencyAr
   });
 
   // Step two: Swap each marked edge and update the edge mapping accordingly.
-  tbb::parallel_for(ID(0), _num_nodes, [&](const HypernodeID u) {
+  tbb_kahypar::parallel_for(ID(0), _num_nodes, [&](const HypernodeID u) {
     Header& head = header(u);
     const HyperedgeID first_inactive = firstInactiveEdge(u);
     for (HyperedgeID e = firstActiveEdge(u); e < first_inactive; ++e) {
@@ -388,8 +388,8 @@ parallel::scalable_vector<DynamicAdjacencyArray::RemovedEdge> DynamicAdjacencyAr
 
   // Step three: Update iterator pointers and back edges, collect removed edges.
   vec<RemovedEdge> removed_edges;
-  tbb::parallel_invoke([&]() {
-    tbb::parallel_for(ID(0), _num_nodes, [&](const HypernodeID u) {
+  tbb_kahypar::parallel_invoke([&]() {
+    tbb_kahypar::parallel_for(ID(0), _num_nodes, [&](const HypernodeID u) {
       if (header(u).is_head) {
         restoreIteratorPointers(u);
       }
@@ -411,7 +411,7 @@ void DynamicAdjacencyArray::restoreSinglePinAndParallelEdges(
   initializeEdgeMapping(_edge_mapping);
 
   // Step one: We mark all edges that need to be restored and save their swap target.
-  tbb::parallel_for(UL(0), edges_to_restore.size(), [&](const size_t i) {
+  tbb_kahypar::parallel_for(UL(0), edges_to_restore.size(), [&](const size_t i) {
     const RemovedEdge& re = edges_to_restore[i];
     _removable_edges.set(re.edge_id, true);
     // we abuse the edge mapping to save the swap target
@@ -420,7 +420,7 @@ void DynamicAdjacencyArray::restoreSinglePinAndParallelEdges(
 
   // Step two: We swap each marked edge (in reverse order to removeSinglePinAndParallelEdges),
   // update the edge mapping accordingly and mark the edge again.
-  tbb::parallel_for(ID(0), _num_nodes, [&](const HypernodeID u) {
+  tbb_kahypar::parallel_for(ID(0), _num_nodes, [&](const HypernodeID u) {
     Header& head = header(u);
     const HyperedgeID first = firstEdge(u);
     for (HyperedgeID curr = firstActiveEdge(u);
@@ -435,8 +435,8 @@ void DynamicAdjacencyArray::restoreSinglePinAndParallelEdges(
 
   // Step three: We update the node degrees, restore iterator pointers and the weights
   // of the representatives and update the back edges.
-  tbb::parallel_invoke([&]() {
-    tbb::parallel_for(ID(0), _num_nodes, [&](const HypernodeID u) {
+  tbb_kahypar::parallel_invoke([&]() {
+    tbb_kahypar::parallel_for(ID(0), _num_nodes, [&](const HypernodeID u) {
       if (header(u).is_head) {
         bool restore_it = false;
         for (const HypernodeID& current_u: headers(u)) {
@@ -485,7 +485,7 @@ void DynamicAdjacencyArray::sortIncidentEdges() {
   edge_permutation.resize(_edges.size());
   initializeEdgeMapping(edge_permutation);
 
-  tbb::parallel_for(ID(0), ID(_header_array.size()), [&](HypernodeID u) {
+  tbb_kahypar::parallel_for(ID(0), ID(_header_array.size()), [&](HypernodeID u) {
     // sort mapped indizes
     const HyperedgeID start = firstActiveEdge(u);
     const HyperedgeID end = firstInactiveEdge(u);
@@ -506,7 +506,7 @@ void DynamicAdjacencyArray::sortIncidentEdges() {
   });
 
   // we need the reversed permutation for the back edges
-  tbb::parallel_for(ID(0), ID(edge_permutation.size()), [&](const HyperedgeID e) {
+  tbb_kahypar::parallel_for(ID(0), ID(edge_permutation.size()), [&](const HyperedgeID e) {
     _edge_mapping[edge_permutation[e]] = e;
   });
   applyEdgeMapping(_edge_mapping);
@@ -518,7 +518,7 @@ DynamicAdjacencyArray DynamicAdjacencyArray::copy(parallel_tag_t) const {
   DynamicAdjacencyArray adjacency_array;
   adjacency_array._num_nodes = _num_nodes;
 
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     adjacency_array._header_array.resize(_header_array.size());
     memcpy(adjacency_array._header_array.data(), _header_array.data(),
       sizeof(Header) * _header_array.size());

@@ -279,7 +279,7 @@ namespace impl {
 
     // data structures to draw random PQs
     std::atomic<int> seed { 555 };
-    tbb::enumerable_thread_specific<impl::AccessToken> ets_tokens([&]() {
+    tbb_kahypar::enumerable_thread_specific<impl::AccessToken> ets_tokens([&]() {
       return impl::AccessToken(seed.fetch_add(1, std::memory_order_relaxed), num_pqs);
     });
 
@@ -429,7 +429,7 @@ namespace impl {
       __atomic_fetch_add(&attributed_gain, local_attributed_gain, __ATOMIC_RELAXED);
     };
 
-    tbb::task_group tg;
+    tbb_kahypar::task_group tg;
     for (size_t i = 0; i < _context.shared_memory.num_threads; ++i) { tg.run(std::bind(task, i)); }
     tg.wait();
 
@@ -458,7 +458,7 @@ namespace impl {
     auto [attributed_gain, num_moves_performed] = findMoves(hypergraph);
 
     if constexpr (GainCache::invalidates_entries) {
-      tbb::parallel_for(UL(0), num_moves_performed, [&](const size_t i) {
+      tbb_kahypar::parallel_for(UL(0), num_moves_performed, [&](const size_t i) {
         _gain_cache.recomputeInvalidTerms(phg, _moves[i].node);
       });
     }

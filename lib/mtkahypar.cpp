@@ -36,7 +36,7 @@
 #include "include/lib_generic_impls.h"
 #include "include/lib_helper_functions.h"
 
-#include "tbb/parallel_for.h"
+#include "tbb_kahypar/parallel_for.h"
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/partition/context.h"
@@ -296,7 +296,7 @@ mt_kahypar_hypergraph_t mt_kahypar_create_hypergraph(const mt_kahypar_context_t*
                                                      mt_kahypar_error_t* error) {
   // Transform adjacence array into adjacency list
   vec<vec<HypernodeID>> edge_vector(num_hyperedges);
-  tbb::parallel_for<HyperedgeID>(0, num_hyperedges, [&](const mt_kahypar::HyperedgeID& he) {
+  tbb_kahypar::parallel_for<HyperedgeID>(0, num_hyperedges, [&](const mt_kahypar::HyperedgeID& he) {
     const size_t num_pins = hyperedge_indices[he + 1] - hyperedge_indices[he];
     edge_vector[he].resize(num_pins);
     for ( size_t i = 0; i < num_pins; ++i ) {
@@ -322,7 +322,7 @@ mt_kahypar_hypergraph_t mt_kahypar_create_graph(const mt_kahypar_context_t* cont
                                                 mt_kahypar_error_t* error) {
   // Transform adjacence array into adjacence list
   vec<std::pair<mt_kahypar::HypernodeID, mt_kahypar::HypernodeID>> edge_vector(num_edges);
-  tbb::parallel_for<mt_kahypar::HyperedgeID>(0, num_edges, [&](const mt_kahypar::HyperedgeID& he) {
+  tbb_kahypar::parallel_for<mt_kahypar::HyperedgeID>(0, num_edges, [&](const mt_kahypar::HyperedgeID& he) {
     edge_vector[he] = std::make_pair(edges[2*he], edges[2*he + 1]);
   });
 
@@ -344,7 +344,7 @@ mt_kahypar_target_graph_t* mt_kahypar_create_target_graph(const mt_kahypar_conte
   unused(context);
   // Transform adjacency array into adjacence list
   vec<std::pair<mt_kahypar::HypernodeID, mt_kahypar::HypernodeID>> edge_vector(num_edges);
-  tbb::parallel_for<mt_kahypar::HyperedgeID>(0, num_edges, [&](const mt_kahypar::HyperedgeID& he) {
+  tbb_kahypar::parallel_for<mt_kahypar::HyperedgeID>(0, num_edges, [&](const mt_kahypar::HyperedgeID& he) {
     edge_vector[he] = std::make_pair(edges[2*he], edges[2*he + 1]);
   });
 

@@ -32,8 +32,8 @@
 #include "mt-kahypar/utils/floating_point_comparisons.h"
 #include "mt-kahypar/parallel/stl/thread_locals.h"
 
-#include <tbb/parallel_reduce.h>
-#include <tbb/parallel_sort.h>
+#include <tbb_kahypar/parallel_reduce.h>
+#include <tbb_kahypar/parallel_sort.h>
 
 namespace mt_kahypar::metrics {
 template<typename Hypergraph>
@@ -44,15 +44,15 @@ double modularity(const Graph<Hypergraph>& graph, const ds::Clustering& communit
   vec<double> cluster_mod(graph.numNodes(), 0.0);
 
   // make summation order deterministic!
-  tbb::parallel_for(UL(0), graph.numNodes(), [&](size_t pos) {
+  tbb_kahypar::parallel_for(UL(0), graph.numNodes(), [&](size_t pos) {
     nodes[pos] = pos;
   });
-  tbb::parallel_sort(nodes.begin(), nodes.end(), [&](NodeID lhs, NodeID rhs) {
+  tbb_kahypar::parallel_sort(nodes.begin(), nodes.end(), [&](NodeID lhs, NodeID rhs) {
     return std::tie(communities[lhs], lhs) < std::tie(communities[rhs], rhs);
   });
 
   // deterministic reduce doesn't have dynamic load balancing --> precompute the contributions and then sum them
-  tbb::parallel_for(UL(0), graph.numNodes(), [&](size_t pos) {
+  tbb_kahypar::parallel_for(UL(0), graph.numNodes(), [&](size_t pos) {
     NodeID x = nodes[pos];
     PartitionID comm = communities[x];
     double comm_vol = 0.0, internal = 0.0;
@@ -71,11 +71,11 @@ double modularity(const Graph<Hypergraph>& graph, const ds::Clustering& communit
     }
   });
 
-  auto r = tbb::blocked_range<size_t>(UL(0), graph.numNodes(), 1000);
-  auto combine_range = [&](const tbb::blocked_range<size_t>& r, double partial) {
+  auto r = tbb_kahypar::blocked_range<size_t>(UL(0), graph.numNodes(), 1000);
+  auto combine_range = [&](const tbb_kahypar::blocked_range<size_t>& r, double partial) {
     return std::accumulate(cluster_mod.begin() + r.begin(), cluster_mod.begin() + r.end(), partial);
   };
-  return tbb::parallel_deterministic_reduce(r, 0.0, combine_range, std::plus<>()) / graph.totalVolume();
+  return tbb_kahypar::parallel_deterministic_reduce(r, 0.0, combine_range, std::plus<>()) / graph.totalVolume();
 }
 
 namespace {
@@ -97,14 +97,14 @@ bool ParallelLocalMovingModularity<Hypergraph>::localMoving(Graph<Hypergraph>& g
 
   // init
   if (_context.partition.deterministic) {
-    tbb::parallel_for(UL(0), graph.numNodes(), [&](NodeID u) {
+    tbb_kahypar::parallel_for(UL(0), graph.numNodes(), [&](NodeID u) {
       communities[u] = u;
       _cluster_volumes[u].store(graph.nodeVolume(u), std::memory_order_relaxed);
     });
   } else {
     auto& nodes = permutation.permutation;
     nodes.resize(graph.numNodes());
-    tbb::parallel_for(ID(0), static_cast<NodeID>(graph.numNodes()), [&](const NodeID u) {
+    tbb_kahypar::parallel_for(ID(0), static_cast<NodeID>(graph.numNodes()), [&](const NodeID u) {
       nodes[u] = u;
       communities[u] = u;
       _cluster_volumes[u].store(graph.nodeVolume(u), std::memory_order_relaxed);
@@ -160,8 +160,8 @@ size_t ParallelLocalMovingModularity<Hypergraph>::synchronousParallelRound(const
     size_t first = permutation.bucket_bounds[first_bucket];
     size_t last = permutation.bucket_bounds[last_bucket];
 
-    tbb::enumerable_thread_specific<size_t> num_moved_local(0);
-    tbb::parallel_for(first, last, [&](size_t pos) {
+    tbb_kahypar::enumerable_thread_specific<size_t> num_moved_local(0);
+    tbb_kahypar::parallel_for(first, last, [&](size_t pos) {
       HypernodeID u = permutation.at(pos);
       PartitionID best_cluster = computeMaxGainCluster(graph, communities, u);
       if (best_cluster != communities[u]) {
@@ -176,16 +176,16 @@ size_t ParallelLocalMovingModularity<Hypergraph>::synchronousParallelRound(const
 
     // We can't do atomic adds of the volumes since they're not commutative and thus lead to non-deterministic decisions
     // Instead we sort the updates, and for each cluster let one thread sum up the updates.
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       volume_updates_to.finalize();
-      tbb::parallel_sort(volume_updates_to.begin(), volume_updates_to.end());
+      tbb_kahypar::parallel_sort(volume_updates_to.begin(), volume_updates_to.end());
     }, [&] {
       volume_updates_from.finalize();
-      tbb::parallel_sort(volume_updates_from.begin(), volume_updates_from.end());
+      tbb_kahypar::parallel_sort(volume_updates_from.begin(), volume_updates_from.end());
     });
 
     const size_t sz_to = volume_updates_to.size();
-    tbb::parallel_for(UL(0), sz_to, [&](size_t pos) {
+    tbb_kahypar::parallel_for(UL(0), sz_to, [&](size_t pos) {
       PartitionID c = volume_updates_to[pos].cluster;
       if (pos == 0 || volume_updates_to[pos - 1].cluster != c) {
         ArcWeight vol_delta = 0.0;
@@ -199,7 +199,7 @@ size_t ParallelLocalMovingModularity<Hypergraph>::synchronousParallelRound(const
     volume_updates_to.clear();
 
     const size_t sz_from = volume_updates_from.size();
-    tbb::parallel_for(UL(0), sz_from, [&](size_t pos) {
+    tbb_kahypar::parallel_for(UL(0), sz_from, [&](size_t pos) {
       PartitionID c = volume_updates_from[pos].cluster;
       if (pos == 0 || volume_updates_from[pos - 1].cluster != c) {
         ArcWeight vol_delta = 0.0;
@@ -240,7 +240,7 @@ size_t ParallelLocalMovingModularity<Hypergraph>::parallelNonDeterministicRound(
     utils::Randomize::instance().parallelShuffleVector(nodes, UL(0), nodes.size());
   }
 
-  tbb::enumerable_thread_specific<size_t> local_number_of_nodes_moved(0);
+  tbb_kahypar::enumerable_thread_specific<size_t> local_number_of_nodes_moved(0);
   auto moveNode = [&](const NodeID u) {
     const ArcWeight volU = graph.nodeVolume(u);
     const PartitionID from = communities[u];
@@ -256,7 +256,7 @@ size_t ParallelLocalMovingModularity<Hypergraph>::parallelNonDeterministicRound(
 #ifdef KAHYPAR_ENABLE_HEAVY_PREPROCESSING_ASSERTIONS
   std::for_each(nodes.begin(), nodes.end(), moveNode);
 #else
-  tbb::parallel_for(UL(0), nodes.size(), [&](size_t i) { moveNode(nodes[i]); });
+  tbb_kahypar::parallel_for(UL(0), nodes.size(), [&](size_t i) { moveNode(nodes[i]); });
 #endif
   size_t number_of_nodes_moved = local_number_of_nodes_moved.combine(std::plus<>());
   return number_of_nodes_moved;
@@ -346,7 +346,7 @@ template<class Hypergraph>
 void ParallelLocalMovingModularity<Hypergraph>::initializeClusterVolumes(const Graph<Hypergraph>& graph, ds::Clustering& communities) {
   _reciprocal_total_volume = 1.0 / graph.totalVolume();
   _vol_multiplier_div_by_node_vol =  _reciprocal_total_volume;
-  tbb::parallel_for(ID(0), static_cast<NodeID>(graph.numNodes()), [&](const NodeID u) {
+  tbb_kahypar::parallel_for(ID(0), static_cast<NodeID>(graph.numNodes()), [&](const NodeID u) {
     const PartitionID community_id = communities[u];
     _cluster_volumes[community_id] += graph.nodeVolume(u);
   });
@@ -355,7 +355,7 @@ void ParallelLocalMovingModularity<Hypergraph>::initializeClusterVolumes(const G
 template<class Hypergraph>
 ParallelLocalMovingModularity<Hypergraph>::~ParallelLocalMovingModularity() {
 /*
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     parallel::parallel_free_thread_local_internal_data(
             _local_small_incident_cluster_weight, [&](CacheEfficientIncidentClusterWeights& data) {
               data.freeInternalData();

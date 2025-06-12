@@ -26,7 +26,7 @@
 
 #include "mt-kahypar/partition/mapping/initial_mapping.h"
 
-#include <tbb/parallel_invoke.h>
+#include <tbb_kahypar/parallel_invoke.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/partition/mapping/target_graph.h"
@@ -55,7 +55,7 @@ std::pair<ds::StaticHypergraph, StaticPartitionedHypergraph> convert_to_static_h
   vec<HypernodeWeight> hypernode_weight;
 
   // Allocate data structure
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     edge_vector.assign(num_hyperedges, vec<HypernodeID>());
   }, [&] {
     hyperedge_weight.assign(num_hyperedges, 0);
@@ -64,7 +64,7 @@ std::pair<ds::StaticHypergraph, StaticPartitionedHypergraph> convert_to_static_h
   });
 
   // Write hypergraph into temporary data structure
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     if constexpr ( PartitionedHypergraph::is_graph ) {
       CAtomic<size_t> cnt(0);
       phg.doParallelForAllEdges([&](const HyperedgeID& he) {

@@ -30,7 +30,7 @@
 
 #include <cmath>
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/macros.h"
 #include "mt-kahypar/datastructures/hypergraph_common.h"
@@ -110,7 +110,7 @@ class PinCountInPart {
     _values_per_hyperedge = other._values_per_hyperedge;
     _extraction_mask = other._extraction_mask;
     _pin_count_in_part = std::move(other._pin_count_in_part);
-    _ets_pin_counts = tbb::enumerable_thread_specific<PinCountSnapshot>([&] { return initPinCountSnapshot(); });
+    _ets_pin_counts = tbb_kahypar::enumerable_thread_specific<PinCountSnapshot>([&] { return initPinCountSnapshot(); });
     return *this;
   }
 
@@ -257,7 +257,7 @@ class PinCountInPart {
   size_t _values_per_hyperedge;
   Value _extraction_mask;
   Array<Value> _pin_count_in_part;
-  tbb::enumerable_thread_specific<PinCountSnapshot> _ets_pin_counts;
+  tbb_kahypar::enumerable_thread_specific<PinCountSnapshot> _ets_pin_counts;
 
 };
 }  // namespace ds

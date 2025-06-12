@@ -30,7 +30,7 @@
 #include <numeric>
 #include <vector>
 
-#include <tbb/parallel_scan.h>
+#include <tbb_kahypar/parallel_scan.h>
 
 #include "mt-kahypar/parallel/stl/scalable_vector.h"
 
@@ -52,20 +52,20 @@ namespace mt_kahypar {
       neutral_element(neutral_element),
       f(f) { }
 
-    ParallelPrefixSumBody(ParallelPrefixSumBody& other, tbb::split) :
+    ParallelPrefixSumBody(ParallelPrefixSumBody& other, tbb_kahypar::split) :
       first(other.first),
       out(other.out),
       sum(other.neutral_element),
       neutral_element(other.neutral_element),
       f(other.f) { }
 
-    void operator()(const tbb::blocked_range<size_t>& r, tbb::pre_scan_tag ) {
+    void operator()(const tbb_kahypar::blocked_range<size_t>& r, tbb_kahypar::pre_scan_tag ) {
       for (size_t i = r.begin(); i < r.end(); ++i) {
         sum = f(sum, *(first + i));
       }
     }
 
-    void operator()(const tbb::blocked_range<size_t>& r, tbb::final_scan_tag ) {
+    void operator()(const tbb_kahypar::blocked_range<size_t>& r, tbb_kahypar::final_scan_tag ) {
       for (size_t i = r.begin(); i < r.end(); ++i) {
         sum = f(sum, *(first + i));
         *(out + i) = sum;
@@ -103,7 +103,7 @@ namespace mt_kahypar {
     }
 
     ParallelPrefixSumBody<InIt, OutIt, BinOp> body(first, d, neutral_element, f);
-    tbb::parallel_scan(tbb::blocked_range<size_t>(0, static_cast<size_t>(n)), body);
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(0, static_cast<size_t>(n)), body);
   }
 
 }
@@ -119,7 +119,7 @@ class TBBPrefixSum {
     _sum(0),
     _data(data) { }
 
-  TBBPrefixSum(TBBPrefixSum& prefix_sum, tbb::split) :
+  TBBPrefixSum(TBBPrefixSum& prefix_sum, tbb_kahypar::split) :
     _sum(0),
     _data(prefix_sum._data) { }
 
@@ -150,7 +150,7 @@ class TBBPrefixSum {
   }
 
   template<typename Tag>
-  void operator()(const tbb::blocked_range<size_t>& range, Tag) {
+  void operator()(const tbb_kahypar::blocked_range<size_t>& range, Tag) {
       T temp = _sum;
       for( size_t i = range.begin(); i < range.end(); ++i ) {
           temp = temp + _data[i];

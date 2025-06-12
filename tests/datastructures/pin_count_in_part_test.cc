@@ -30,7 +30,7 @@
 #include <mt-kahypar/macros.h>
 
 #include "gmock/gmock.h"
-#include <tbb/task_group.h>
+#include <tbb_kahypar/task_group.h>
 
 #include "mt-kahypar/datastructures/pin_count_in_part.h"
 #ifdef KAHYPAR_ENABLE_LARGE_K_PARTITIONING_FEATURES
@@ -45,7 +45,7 @@ namespace ds {
 template <class F, class K>
 void executeConcurrent(F f1, K f2) {
   std::atomic<int> cnt(0);
-  tbb::task_group group;
+  tbb_kahypar::task_group group;
 
   group.run([&] {
         cnt++;

@@ -29,11 +29,11 @@
 
 #include <vector>
 
-#include <tbb/blocked_range.h>
-#include <tbb/parallel_invoke.h>
-#include <tbb/parallel_sort.h>
-#include <tbb/parallel_reduce.h>
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/blocked_range.h>
+#include <tbb_kahypar/parallel_invoke.h>
+#include <tbb_kahypar/parallel_sort.h>
+#include <tbb_kahypar/parallel_reduce.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/parallel/memory_pool.h"
@@ -132,7 +132,7 @@ namespace mt_kahypar::io {
     std::vector<HyperedgeID> hn_degrees;
     std::vector<HypernodeWeight> hn_weights;
 
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       he_sizes.resize(hypergraph.initialNumEdges());
     }, [&] {
       he_weights.resize(hypergraph.initialNumEdges());
@@ -163,21 +163,21 @@ namespace mt_kahypar::io {
     const double stdev_he_size = utils::parallel_stdev(he_sizes, avg_he_size, num_hyperedges);
     const double stdev_he_weight = utils::parallel_stdev(he_weights, avg_he_weight, num_hyperedges);
 
-    tbb::enumerable_thread_specific<size_t> graph_edge_count(0);
+    tbb_kahypar::enumerable_thread_specific<size_t> graph_edge_count(0);
     hypergraph.doParallelForAllEdges([&](const HyperedgeID& he) {
       if (hypergraph.edgeSize(he) == 2) {
         graph_edge_count.local() += 1;
       }
     });
 
-    tbb::parallel_invoke([&] {
-      tbb::parallel_sort(he_sizes.begin(), he_sizes.end());
+    tbb_kahypar::parallel_invoke([&] {
+      tbb_kahypar::parallel_sort(he_sizes.begin(), he_sizes.end());
     }, [&] {
-      tbb::parallel_sort(he_weights.begin(), he_weights.end());
+      tbb_kahypar::parallel_sort(he_weights.begin(), he_weights.end());
     }, [&] {
-      tbb::parallel_sort(hn_degrees.begin(), hn_degrees.end());
+      tbb_kahypar::parallel_sort(hn_degrees.begin(), hn_degrees.end());
     }, [&] {
-      tbb::parallel_sort(hn_weights.begin(), hn_weights.end());
+      tbb_kahypar::parallel_sort(hn_weights.begin(), hn_weights.end());
     });
 
     LOG << "Hypergraph Information";
@@ -493,7 +493,7 @@ namespace mt_kahypar::io {
     using MCol = std::vector<MCell>;
     std::vector<MCol> positive_gains(k, MCol(k, MCell(0)));
 
-    tbb::enumerable_thread_specific<std::vector<Gain>> local_gain(k, 0);
+    tbb_kahypar::enumerable_thread_specific<std::vector<Gain>> local_gain(k, 0);
     hypergraph.doParallelForAllNodes([&](const HypernodeID hn) {
       // Calculate gain to all blocks of the partition
       std::vector<Gain>& tmp_scores = local_gain.local();
@@ -705,9 +705,9 @@ namespace mt_kahypar::io {
   void printCommunityInformation(const Hypergraph& hypergraph) {
 
     PartitionID num_communities =
-            tbb::parallel_reduce(
-                    tbb::blocked_range<HypernodeID>(ID(0), hypergraph.initialNumNodes()),
-                    0, [&](const tbb::blocked_range<HypernodeID>& range, PartitionID init) {
+            tbb_kahypar::parallel_reduce(
+                    tbb_kahypar::blocked_range<HypernodeID>(ID(0), hypergraph.initialNumNodes()),
+                    0, [&](const tbb_kahypar::blocked_range<HypernodeID>& range, PartitionID init) {
               PartitionID my_range_num_communities = init;
               for (HypernodeID hn = range.begin(); hn < range.end(); ++hn) {
                 if ( hypergraph.nodeIsEnabled(hn) ) {
@@ -726,7 +726,7 @@ namespace mt_kahypar::io {
     std::vector<size_t> internal_degree(num_communities, 0);
 
     auto reduce_nodes = [&] {
-      tbb::enumerable_thread_specific< vec< std::pair<size_t, size_t> > > ets_nodes(num_communities, std::make_pair(UL(0), UL(0)));
+      tbb_kahypar::enumerable_thread_specific< vec< std::pair<size_t, size_t> > > ets_nodes(num_communities, std::make_pair(UL(0), UL(0)));
       hypergraph.doParallelForAllNodes([&](const HypernodeID u) {
         const PartitionID cu = hypergraph.communityID(u);
         ets_nodes.local()[cu].first++;
@@ -742,7 +742,7 @@ namespace mt_kahypar::io {
     };
 
     auto reduce_hyperedges = [&] {
-      tbb::enumerable_thread_specific< vec<size_t> > ets_pins(num_communities, 0);
+      tbb_kahypar::enumerable_thread_specific< vec<size_t> > ets_pins(num_communities, 0);
       hypergraph.doParallelForAllEdges([&](const HyperedgeID he) {
         auto& pin_counter = ets_pins.local();
         for (const HypernodeID pin : hypergraph.pins(he)) {
@@ -757,7 +757,7 @@ namespace mt_kahypar::io {
       }
     };
 
-    tbb::parallel_invoke(reduce_nodes, reduce_hyperedges);
+    tbb_kahypar::parallel_invoke(reduce_nodes, reduce_hyperedges);
 
     std::sort(nodes_per_community.begin(), nodes_per_community.end());
     std::sort(internal_pins.begin(), internal_pins.end());

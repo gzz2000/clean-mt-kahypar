@@ -2,10 +2,10 @@
 
 #include "push_relabel_commons.h"
 
-#include <tbb/parallel_for.h>
-#include <tbb/parallel_invoke.h>
-#include <tbb/parallel_reduce.h>
-#include <tbb/tick_count.h>
+#include <tbb_kahypar/parallel_for.h>
+#include <tbb_kahypar/parallel_invoke.h>
+#include <tbb_kahypar/parallel_reduce.h>
+#include <tbb_kahypar/tick_count.h>
 
 #include "../util/sub_range.h"
 
@@ -24,9 +24,9 @@ namespace whfc {
             if (!augmentFlow()) {
                 return false;
             }
-            auto t = tbb::tick_count::now();
+            auto t = tbb_kahypar::tick_count::now();
             deriveSourceSideCut(true);
-            auto t2 = tbb::tick_count::now();
+            auto t2 = tbb_kahypar::tick_count::now();
             source_cut_time += (t2 - t).seconds();
             return true;
         }
@@ -39,9 +39,9 @@ namespace whfc {
         }
 
         bool augmentFlow() {
-            auto t = tbb::tick_count::now();
+            auto t = tbb_kahypar::tick_count::now();
             saturateSourceEdges();
-            auto t2 = tbb::tick_count::now();
+            auto t2 = tbb_kahypar::tick_count::now();
             saturate_time += (t2 - t).seconds();
             size_t num_iterations_with_same_flow = 0;
             bool termination_check_triggered = false;
@@ -59,12 +59,12 @@ namespace whfc {
 
                         Flow old_flow_value = flow_value;
 
-                        auto t3 = tbb::tick_count::now();
+                        auto t3 = tbb_kahypar::tick_count::now();
                         dischargeActiveNodes();
-                        auto t4 = tbb::tick_count::now();
+                        auto t4 = tbb_kahypar::tick_count::now();
                         discharge_time += (t4 - t3).seconds();
                         applyUpdates();
-                        auto t5 = tbb::tick_count::now();
+                        auto t5 = tbb_kahypar::tick_count::now();
                         update_time += (t5 - t4).seconds();
 
 
@@ -93,7 +93,7 @@ namespace whfc {
 
         void dischargeActiveNodes() {
             resetRound();
-            tbb::enumerable_thread_specific<size_t> work(0);
+            tbb_kahypar::enumerable_thread_specific<size_t> work(0);
             auto task = [&](size_t i) {
                 const Node u = active[i];
                 assert(excess[u] > 0);
@@ -108,13 +108,13 @@ namespace whfc {
                     work.local() += dischargeInNode(u);
                 }
             };
-            tbb::parallel_for<size_t>(0UL, num_active, task);
+            tbb_kahypar::parallel_for<size_t>(0UL, num_active, task);
             next_active.finalize();
             work_since_last_global_relabel += work.combine(std::plus<>());
         }
 
         void applyUpdates() {
-            tbb::parallel_for<size_t>(0UL, num_active, [&](size_t i) {
+            tbb_kahypar::parallel_for<size_t>(0UL, num_active, [&](size_t i) {
                 const Node u = active[i];
                 if (level[u] >= max_level) {
                     return;
@@ -127,7 +127,7 @@ namespace whfc {
                 excess[u] += excess_diff[u];
                 excess_diff[u] = 0;
             });
-            tbb::parallel_for<size_t>(0UL, next_active.size(), [&](size_t i) {
+            tbb_kahypar::parallel_for<size_t>(0UL, next_active.size(), [&](size_t i) {
                 const Node u = next_active[i];
                 excess[u] += excess_diff[u];
                 if (isTarget(u) && excess_diff[u] > 0) {
@@ -371,9 +371,9 @@ namespace whfc {
 
         template<bool set_reachability>
         void globalRelabel() {
-            auto t = tbb::tick_count::now();
-            tbb::parallel_for<size_t>(
-                    0, max_level, [&](size_t i) { level[i] = isTarget(Node(i)) ? 0 : max_level; }, tbb::static_partitioner());
+            auto t = tbb_kahypar::tick_count::now();
+            tbb_kahypar::parallel_for<size_t>(
+                    0, max_level, [&](size_t i) { level[i] = isTarget(Node(i)) ? 0 : max_level; }, tbb_kahypar::static_partitioner());
             next_active.clear();
             for (const Node t : target_piercing_nodes) {
                 next_active.push_back_atomic(t);
@@ -410,7 +410,7 @@ namespace whfc {
             }
             work_since_last_global_relabel = 0;
             distance_labels_broken_from_target_side_piercing = false;
-            auto t2 = tbb::tick_count::now();
+            auto t2 = tbb_kahypar::tick_count::now();
             global_relabel_time += (t2 - t).seconds();
         }
 
@@ -423,7 +423,7 @@ namespace whfc {
                 resetReachability(true);
 
                 // calculate new excess nodes
-                tbb::parallel_for<size_t>(0, max_level, [&](int i) {
+                tbb_kahypar::parallel_for<size_t>(0, max_level, [&](int i) {
                     Node u(i);
                     if (!isSource(u) && !isTarget(u) && excess[u] > 0) {
                         assert(level[u] == max_level);
@@ -511,7 +511,7 @@ namespace whfc {
             size_t last = next_active.size();
             int dist = 1;
             while (first != last) {
-                tbb::parallel_for<size_t>(first, last, [&](size_t i) { scan(next_active[i], dist); });
+                tbb_kahypar::parallel_for<size_t>(first, last, [&](size_t i) { scan(next_active[i], dist); });
                 next_active.finalize();
                 first = last;
                 last = next_active.size();

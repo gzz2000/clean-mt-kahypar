@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include <tbb/parallel_sort.h>
+#include <tbb_kahypar/parallel_sort.h>
 
 #include "mt-kahypar/partition/context.h"
 #include "mt-kahypar/datastructures/streaming_vector.h"
@@ -72,7 +72,7 @@ class DegreeZeroHypernodeRemover {
   // ! Restore degree-zero vertices
   void restoreDegreeZeroHypernodes(PartitionedHypergraph& hypergraph) {
     // Sort degree-zero vertices in decreasing order of their weight
-    tbb::parallel_sort(_removed_hns.begin(), _removed_hns.end(),
+    tbb_kahypar::parallel_sort(_removed_hns.begin(), _removed_hns.end(),
       [&](const HypernodeID& lhs, const HypernodeID& rhs) {
         return hypergraph.nodeWeight(lhs) > hypergraph.nodeWeight(rhs)
                 || (hypergraph.nodeWeight(lhs) == hypergraph.nodeWeight(rhs) && lhs > rhs);

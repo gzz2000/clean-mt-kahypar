@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tbb/tick_count.h>
+#include <tbb_kahypar/tick_count.h>
 #include "../datastructure/flow_hypergraph.h"
 #include "cutter_state.h"
 #include "piercing.h"
@@ -32,11 +32,11 @@ namespace whfc {
         }
 
         bool pierce() {
-            auto t = tbb::tick_count::now();
+            auto t = tbb_kahypar::tick_count::now();
             // DO NOT CHANGE THE ORDER OF THESE!
             const bool reject_if_aug = cs.rejectPiercingIfAugmenting();
             bool res = piercer.findPiercingNode(reject_if_aug) && (!reject_if_aug || !cs.augmenting_path_available_from_piercing);
-            pierce_time += (tbb::tick_count::now() - t).seconds();
+            pierce_time += (tbb_kahypar::tick_count::now() - t).seconds();
             return res;
         }
 
@@ -49,20 +49,20 @@ namespace whfc {
             if (cs.augmenting_path_available_from_piercing) {
                 cs.has_cut = cs.flow_algo.findMinCuts();
             } else {
-                auto t = tbb::tick_count::now();
+                auto t = tbb_kahypar::tick_count::now();
                 if (cs.side_to_pierce == 0) {
                     cs.flow_algo.deriveSourceSideCut(false); // no flow changed --> no new excesses created
                 } else {
                     cs.flow_algo.deriveTargetSideCut();
                 }
-                cs.flow_algo.source_cut_time += (tbb::tick_count::now() - t).seconds();
+                cs.flow_algo.source_cut_time += (tbb_kahypar::tick_count::now() - t).seconds();
                 cs.has_cut = true; // no flow increased
             }
 
             if (cs.has_cut) {
-                auto t = tbb::tick_count::now();
+                auto t = tbb_kahypar::tick_count::now();
                 cs.assimilate();
-                assimilate_time += (tbb::tick_count::now() - t).seconds();
+                assimilate_time += (tbb_kahypar::tick_count::now() - t).seconds();
             }
 
             return cs.has_cut && cs.flow_algo.flow_value <= cs.flow_algo.upper_flow_bound;

@@ -29,10 +29,10 @@
 
 #include <string>
 
-#include <tbb/concurrent_queue.h>
-#include <tbb/task_group.h>
-#include <tbb/parallel_for.h>
-#include <tbb/parallel_reduce.h>
+#include <tbb_kahypar/concurrent_queue.h>
+#include <tbb_kahypar/task_group.h>
+#include <tbb_kahypar/parallel_for.h>
+#include <tbb_kahypar/parallel_reduce.h>
 
 #include "kahypar-resources/meta/mandatory.h"
 
@@ -103,7 +103,7 @@ class MultilevelCoarsener : public ICoarsener,
     _progress_bar += _hg.numRemovedHypernodes();
 
     // Initialize internal data structures parallel
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       _current_vertices.resize(_hg.initialNumNodes());
     }, [&] {
       _matching_state.resize(_hg.initialNumNodes());
@@ -151,7 +151,7 @@ class MultilevelCoarsener : public ICoarsener,
     // Random shuffle vertices of current hypergraph
     _current_vertices.resize(current_hg.initialNumNodes());
     parallel::scalable_vector<HypernodeID> cluster_ids(current_hg.initialNumNodes());
-    tbb::parallel_for(ID(0), current_hg.initialNumNodes(), [&](const HypernodeID hn) {
+    tbb_kahypar::parallel_for(ID(0), current_hg.initialNumNodes(), [&](const HypernodeID hn) {
       ASSERT(hn < _current_vertices.size());
       // Reset clustering
       _current_vertices[hn] = hn;
@@ -238,11 +238,11 @@ class MultilevelCoarsener : public ICoarsener,
     const HypernodeID hierarchy_contraction_limit = hierarchyContractionLimit(current_hg);
     DBG << V(current_hg.initialNumNodes()) << V(hierarchy_contraction_limit);
     HypernodeID current_num_nodes = num_hns_before_pass;
-    tbb::enumerable_thread_specific<HypernodeID> contracted_nodes(0);
-    tbb::enumerable_thread_specific<HypernodeID> num_nodes_update_threshold(0);
+    tbb_kahypar::enumerable_thread_specific<HypernodeID> contracted_nodes(0);
+    tbb_kahypar::enumerable_thread_specific<HypernodeID> num_nodes_update_threshold(0);
     ds::FixedVertexSupport<Hypergraph> fixed_vertices = current_hg.copyOfFixedVertexSupport();
     fixed_vertices.setMaxBlockWeight(_context.partition.max_part_weights);
-    tbb::parallel_for(ID(0), current_hg.initialNumNodes(), [&](const HypernodeID id) {
+    tbb_kahypar::parallel_for(ID(0), current_hg.initialNumNodes(), [&](const HypernodeID id) {
       ASSERT(id < _current_vertices.size());
       const HypernodeID hn = _current_vertices[id];
       if (current_hg.nodeIsEnabled(hn)) {

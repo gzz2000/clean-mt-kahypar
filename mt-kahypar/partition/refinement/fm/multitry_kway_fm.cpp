@@ -94,7 +94,7 @@ namespace mt_kahypar {
     enable_light_fm = false;
     sharedData.release_nodes = context.refinement.fm.release_nodes;
     double current_time_limit = time_limit;
-    tbb::task_group tg;
+    tbb_kahypar::task_group tg;
     vec<HypernodeWeight> initialPartWeights(size_t(context.partition.k));
     std::vector<HypernodeWeight> max_part_weights = setupMaxPartWeights(context);
     HighResClockTimepoint fm_start = std::chrono::high_resolution_clock::now();
@@ -148,7 +148,7 @@ namespace mt_kahypar {
         }());
 
         if constexpr (GainCache::invalidates_entries) {
-          tbb::parallel_for(MoveID(0), sharedData.moveTracker.numPerformedMoves(), [&](const MoveID i) {
+          tbb_kahypar::parallel_for(MoveID(0), sharedData.moveTracker.numPerformedMoves(), [&](const MoveID i) {
             gain_cache.recomputeInvalidTerms(phg, sharedData.moveTracker.moveOrder[i].node);
           });
         }
@@ -230,10 +230,10 @@ namespace mt_kahypar {
     if ( refinement_nodes.empty() ) {
       // log(n) level case
       // iterate over all nodes and insert border nodes into task queue
-      tbb::parallel_for(tbb::blocked_range<HypernodeID>(0, phg.initialNumNodes()),
-        [&](const tbb::blocked_range<HypernodeID>& r) {
-          const int task_id = tbb::this_task_arena::current_thread_index();
-          // In really rare cases, the tbb::this_task_arena::current_thread_index()
+      tbb_kahypar::parallel_for(tbb_kahypar::blocked_range<HypernodeID>(0, phg.initialNumNodes()),
+        [&](const tbb_kahypar::blocked_range<HypernodeID>& r) {
+          const int task_id = tbb_kahypar::this_task_arena::current_thread_index();
+          // In really rare cases, the tbb_kahypar::this_task_arena::current_thread_index()
           // function a thread id greater than max_concurrency which causes an
           // segmentation fault if we do not perform the check here. This is caused by
           // our working queue for border nodes with which we initialize the localized
@@ -249,9 +249,9 @@ namespace mt_kahypar {
         });
     } else {
       // n-level case
-      tbb::parallel_for(UL(0), refinement_nodes.size(), [&](const size_t i) {
+      tbb_kahypar::parallel_for(UL(0), refinement_nodes.size(), [&](const size_t i) {
         const HypernodeID u = refinement_nodes[i];
-        const int task_id = tbb::this_task_arena::current_thread_index();
+        const int task_id = tbb_kahypar::this_task_arena::current_thread_index();
         if ( task_id >= 0 && task_id < TBBInitializer::instance().total_number_of_threads() ) {
           if (phg.nodeIsEnabled(u) && phg.isBorderNode(u) && !phg.isFixed(u)) {
             sharedData.refinementNodes.safe_push(u, task_id);
@@ -296,7 +296,7 @@ namespace mt_kahypar {
     // that is moved twice (e.g., 0 -> 2 -> 1 becomes 0 -> 1)
     for (PartitionID part = 0; part < context.partition.k; ++part) {
       vec<Move>& moves = rebalancing_moves_by_part[part];
-      tbb::parallel_for(UL(0), moves.size(), [&](const size_t i) {
+      tbb_kahypar::parallel_for(UL(0), moves.size(), [&](const size_t i) {
         Move& r_move = moves[i];
         if (r_move.isValid() && move_tracker.wasNodeMovedInThisRound(r_move.node)) {
           ASSERT(r_move.to == phg.partID(r_move.node));
@@ -313,7 +313,7 @@ namespace mt_kahypar {
             first_move.invalidate();
           }
         }
-      }, tbb::static_partitioner());
+      }, tbb_kahypar::static_partitioner());
     }
 
     // NOTE: We re-insert invalid rebalancing moves to ensure the gain cache is updated correctly by the global rollback
@@ -371,12 +371,12 @@ namespace mt_kahypar {
 
     std::swap(move_tracker.moveOrder, tmp_move_order);
     move_tracker.runningMoveID.store(first_move_id + next_move_index);
-    tbb::parallel_for(static_cast<MoveID>(0), next_move_index, [&](const MoveID move_id) {
+    tbb_kahypar::parallel_for(static_cast<MoveID>(0), next_move_index, [&](const MoveID move_id) {
       const Move& m = move_tracker.moveOrder[move_id];
       if (m.isValid()) {
         move_tracker.moveOfNode[m.node] = first_move_id + move_id;
       }
-    }, tbb::static_partitioner());
+    }, tbb_kahypar::static_partitioner());
   }
 
   template<typename GraphAndGainTypes>

@@ -26,9 +26,9 @@
 
 #pragma once
 
-#include <tbb/concurrent_queue.h>
-#include <tbb/concurrent_vector.h>
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/concurrent_queue.h>
+#include <tbb_kahypar/concurrent_vector.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/partition/context.h"
 #include "mt-kahypar/partition/refinement/flows/refiner_adapter.h"
@@ -114,7 +114,7 @@ class QuotientGraph {
     // ! True, if block is contained in block scheduler queue
     CAtomic<bool> is_in_queue;
     // ! Cut hyperedges of block pair
-    tbb::concurrent_vector<HyperedgeID> cut_hes;
+    tbb_kahypar::concurrent_vector<HyperedgeID> cut_hes;
     // ! Number of cut hyperedges
     CAtomic<size_t> num_cut_hes;
     // ! Current weight of all cut hyperedges
@@ -175,7 +175,7 @@ class QuotientGraph {
    // ! Quotient graph
     vec<vec<QuotientGraphEdge>>& _quotient_graph;
     // ! Queue that contains all unscheduled block pairs of the current round
-    tbb::concurrent_queue<BlockPair> _unscheduled_blocks;
+    tbb_kahypar::concurrent_queue<BlockPair> _unscheduled_blocks;
     // ! Current improvement made in this round
     CAtomic<HyperedgeWeight> _round_improvement;
     // Active blocks for next round
@@ -260,7 +260,7 @@ class QuotientGraph {
     vec<vec<QuotientGraphEdge>>& _quotient_graph;
     // Contains all active block scheduling rounds
     CAtomic<size_t> _num_rounds;
-    tbb::concurrent_vector<ActiveBlockSchedulingRound> _rounds;
+    tbb_kahypar::concurrent_vector<ActiveBlockSchedulingRound> _rounds;
     // ! Minimum improvement per round to continue with next round
     HyperedgeWeight _min_improvement_per_round;
     // ! If true, then search is immediatly terminated
@@ -422,7 +422,7 @@ public:
   // ! Number of active searches
   CAtomic<size_t> _num_active_searches;
   // ! Information about searches that are currently running
-  tbb::concurrent_vector<Search> _searches;
+  tbb_kahypar::concurrent_vector<Search> _searches;
 };
 
 }  // namespace kahypar

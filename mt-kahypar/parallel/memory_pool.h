@@ -40,8 +40,8 @@
 #include <unistd.h>
 #endif
 
-#include <tbb/parallel_for.h>
-#include <tbb/scalable_allocator.h>
+#include <tbb_kahypar/parallel_for.h>
+#include <tbb_kahypar/scalable_allocator.h>
 
 #include "mt-kahypar/macros.h"
 #include "mt-kahypar/parallel/stl/scalable_unique_ptr.h"
@@ -279,7 +279,7 @@ class MemoryPoolT {
       optimize_memory_allocations();
     }
     const size_t num_memory_segments = _memory_chunks.size();
-    tbb::parallel_for(UL(0), num_memory_segments, [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), num_memory_segments, [&](const size_t i) {
       if (_memory_chunks[i].allocate()) {
         DBG << "Allocate memory chunk of size"
             << size_in_megabyte(_memory_chunks[i].size_in_bytes()) << "MB";
@@ -464,7 +464,7 @@ class MemoryPoolT {
   void free_memory_chunks() {
     std::unique_lock<std::shared_timed_mutex> lock(_memory_mutex);
     const size_t num_memory_segments = _memory_chunks.size();
-    tbb::parallel_for(UL(0), num_memory_segments, [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), num_memory_segments, [&](const size_t i) {
       _memory_chunks[i].free();
     });
     _memory_chunks.clear();

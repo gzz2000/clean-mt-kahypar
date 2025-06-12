@@ -31,8 +31,8 @@
 #include <thread>
 #include <cmath>
 
-#include <tbb/task_arena.h>
-#include <tbb/task_group.h>
+#include <tbb_kahypar/task_arena.h>
+#include <tbb_kahypar/task_group.h>
 
 #include "kahypar-resources/meta/mandatory.h"
 
@@ -85,7 +85,7 @@ class ConcurrentBucketMap {
 
   template<typename F>
   void doParallelForAllBuckets(const F& f) {
-    tbb::parallel_for(UL(0), _num_buckets, [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), _num_buckets, [&](const size_t i) {
       f(i);
     });
   }
@@ -107,7 +107,7 @@ class ConcurrentBucketMap {
     // ! Assumption is that keys are evenly distributed among buckets (with a small buffer)
     const size_t estimated_bucket_size = std::max(
       static_cast<size_t>( 1.5 * estimated_num_insertions ) / _num_buckets, UL(1));
-    tbb::parallel_for(UL(0), _num_buckets, [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), _num_buckets, [&](const size_t i) {
       _buckets[i].reserve(estimated_bucket_size);
     });
   }

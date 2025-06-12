@@ -269,7 +269,7 @@ IncidentNetArray IncidentNetArray::copy(parallel_tag_t) const {
   incident_nets._num_hypernodes = _num_hypernodes;
   incident_nets._size_in_bytes = _size_in_bytes;
 
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     incident_nets._index_array.resize(_index_array.size());
     memcpy(incident_nets._index_array.data(), _index_array.data(),
       sizeof(size_t) * _index_array.size());
@@ -294,7 +294,7 @@ IncidentNetArray IncidentNetArray::copy() const {
 }
 
 void IncidentNetArray::reset() {
-  tbb::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID u) {
+  tbb_kahypar::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID u) {
     header(u)->current_version = 0;
     for ( Entry* entry = firstEntry(u); entry != lastEntry(u); ++entry ) {
       entry->version = 0;
@@ -368,8 +368,8 @@ void IncidentNetArray::construct(const HyperedgeVector& edge_vector) {
   const HyperedgeID num_hyperedges = edge_vector.size();
   ThreadLocalCounter local_incident_nets_per_vertex(_num_hypernodes + 1, 0);
   AtomicCounter current_incident_net_pos;
-  tbb::parallel_invoke([&] {
-    tbb::parallel_for(ID(0), num_hyperedges, [&](const size_t pos) {
+  tbb_kahypar::parallel_invoke([&] {
+    tbb_kahypar::parallel_for(ID(0), num_hyperedges, [&](const size_t pos) {
       parallel::scalable_vector<size_t>& num_incident_nets_per_vertex =
         local_incident_nets_per_vertex.local();
       for ( const HypernodeID& pin : edge_vector[pos] ) {
@@ -387,20 +387,20 @@ void IncidentNetArray::construct(const HyperedgeVector& edge_vector) {
   // To obtain the global number of incident nets per vertex, we iterate
   // over each thread local counter and sum it up.
   for ( const parallel::scalable_vector<size_t>& c : local_incident_nets_per_vertex ) {
-    tbb::parallel_for(ID(0), _num_hypernodes + 1, [&](const size_t pos) {
+    tbb_kahypar::parallel_for(ID(0), _num_hypernodes + 1, [&](const size_t pos) {
       _index_array[pos] += c[pos] * sizeof(Entry);
     });
   }
 
   // Compute start positon of the incident nets of each vertex via a parallel prefix sum
   parallel::TBBPrefixSum<size_t, Array> incident_net_prefix_sum(_index_array);
-  tbb::parallel_scan(tbb::blocked_range<size_t>(
+  tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(
           UL(0), UI64(_num_hypernodes + 1)), incident_net_prefix_sum);
   _size_in_bytes = incident_net_prefix_sum.total_sum();
   _incident_net_array = parallel::make_unique<char>(_size_in_bytes);
 
   // Insert incident nets into incidence array
-  tbb::parallel_for(ID(0), num_hyperedges, [&](const HyperedgeID he) {
+  tbb_kahypar::parallel_for(ID(0), num_hyperedges, [&](const HyperedgeID he) {
     for ( const HypernodeID& pin : edge_vector[he] ) {
       Entry* entry = firstEntry(pin) + current_incident_net_pos[pin]++;
       entry->e = he;
@@ -409,7 +409,7 @@ void IncidentNetArray::construct(const HyperedgeVector& edge_vector) {
   });
 
   // Setup Header of each vertex
-  tbb::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID u) {
+  tbb_kahypar::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID u) {
     Header* head = header(u);
     head->prev = u;
     head->next = u;

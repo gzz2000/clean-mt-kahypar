@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/datastructures/streaming_vector.h"
 #include "mt-kahypar/macros.h"
@@ -47,18 +47,18 @@ struct localized_k_way_fm_t {
 namespace utils {
 // compare cast.h
 template<typename LocalFM>
-localized_k_way_fm_t localized_fm_cast(tbb::enumerable_thread_specific<LocalFM>& local_fm) {
+localized_k_way_fm_t localized_fm_cast(tbb_kahypar::enumerable_thread_specific<LocalFM>& local_fm) {
   return localized_k_way_fm_t {
     reinterpret_cast<localized_k_way_fm_s*>(&local_fm), LocalFM::PartitionedHypergraph::TYPE };
 }
 
 template<typename LocalFM>
-tbb::enumerable_thread_specific<LocalFM>& cast(localized_k_way_fm_t fm) {
+tbb_kahypar::enumerable_thread_specific<LocalFM>& cast(localized_k_way_fm_t fm) {
   if ( LocalFM::PartitionedHypergraph::TYPE != fm.type ) {
     ERR("Cannot cast local FM [" << typeToString(fm.type) << " to "
         << typeToString(LocalFM::PartitionedHypergraph::TYPE) << "]");
   }
-  return *reinterpret_cast<tbb::enumerable_thread_specific<LocalFM>*>(fm.local_fm);
+  return *reinterpret_cast<tbb_kahypar::enumerable_thread_specific<LocalFM>*>(fm.local_fm);
 }
 
 } // namespace utils
@@ -105,9 +105,9 @@ class IFMStrategy {
     using LocalFM = typename Derived::LocalFM;
     using PartitionedHypergraph = typename Derived::PartitionedHypergraph;
     Derived& concrete_strategy = *static_cast<Derived*>(this);
-    tbb::enumerable_thread_specific<LocalFM>& ets_fm = utils::cast<LocalFM>(local_fm);
+    tbb_kahypar::enumerable_thread_specific<LocalFM>& ets_fm = utils::cast<LocalFM>(local_fm);
     PartitionedHypergraph& phg = utils::cast<PartitionedHypergraph>(hypergraph);
-    tbb::task_group tg;
+    tbb_kahypar::task_group tg;
 
     auto task = [&](const size_t task_id) {
       LocalFM& fm = ets_fm.local();

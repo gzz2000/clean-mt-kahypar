@@ -44,9 +44,9 @@ namespace ttm = utils_tm::thread_tm;
 namespace dtm = utils_tm::debug_tm;
 
 #ifdef TBB_AS_DEFAULT
-#include "tbb/scalable_allocator.h"
+#include "tbb_kahypar/scalable_allocator.h"
 using scalable_string = std::
-    basic_string<char, std::char_traits<char>, tbb::scalable_allocator<char>>;
+    basic_string<char, std::char_traits<char>, tbb_kahypar::scalable_allocator<char>>;
 #else
 using scalable_string = std::string;
 #endif

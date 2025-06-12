@@ -27,14 +27,14 @@
 
 #pragma once
 
-#include <tbb/enumerable_thread_specific.h>
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
+#include <tbb_kahypar/parallel_for.h>
 
 namespace mt_kahypar {
 
   namespace internals {
     template<typename T>
-    using ThreadLocal = tbb::enumerable_thread_specific<T>;
+    using ThreadLocal = tbb_kahypar::enumerable_thread_specific<T>;
 
     template<typename T, typename F>
     struct ThreadLocalFree {
@@ -59,11 +59,11 @@ namespace mt_kahypar {
     static void parallel_free_thread_local_internal_data(internals::ThreadLocal<T>& local,
                                                          F&& free_func) {
       internals::ThreadLocalFree<T, F> thread_local_free(std::move(free_func));
-      tbb::parallel_for(local.range(), thread_local_free);
+      tbb_kahypar::parallel_for(local.range(), thread_local_free);
     }
   }
 
   template<typename T>
-  using tls_enumerable_thread_specific = tbb::enumerable_thread_specific<T, tbb::cache_aligned_allocator<T>, tbb::ets_key_per_instance>;
+  using tls_enumerable_thread_specific = tbb_kahypar::enumerable_thread_specific<T, tbb_kahypar::cache_aligned_allocator<T>, tbb_kahypar::ets_key_per_instance>;
 
 }

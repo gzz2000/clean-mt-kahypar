@@ -1,7 +1,7 @@
 /*******************************************************************************
  * utils/poolallocator.h
  *
- * Pool allocator using the tbb::fixed_pool allocator
+ * Pool allocator using the tbb_kahypar::fixed_pool allocator
  * During first initialization all memory is zeroed to force virtual to physical
  * mapping (preventing some slowdown during growing phases)
  *
@@ -26,7 +26,7 @@
 #include <unistd.h>
 
 #define TBB_PREVIEW_MEMORY_POOL 1
-#include "tbb/memory_pool.h"
+#include "tbb_kahypar/memory_pool.h"
 
 //#include "numa.h"
 #include <iostream>
@@ -82,7 +82,7 @@ class BasePoolAllocator
                                            ////16GiB TODO: CHANGE BACK
     static std::atomic_size_t initialized; //(0);// 0 uninitialized 1 currently
                                            // initializing 2 initialized
-    static tbb::fixed_pool* pool;          //= nullptr;
+    static tbb_kahypar::fixed_pool* pool;          //= nullptr;
     static char*            pool_buffer;   //= nullptr;
 
   public:
@@ -131,7 +131,7 @@ class BasePoolAllocator
                 pool_buffer  = (char*)AS().alloc(tempN);
                 if (pool_buffer)
                 {
-                    pool = new tbb::fixed_pool(pool_buffer, tempN);
+                    pool = new tbb_kahypar::fixed_pool(pool_buffer, tempN);
                     initialized.store(tempN);
                     std::atexit(reset);
                 }
@@ -232,7 +232,7 @@ std::atomic_size_t BasePoolAllocator<T, S>::initialized(0);
 template <typename T, typename S>
 char* BasePoolAllocator<T, S>::pool_buffer = nullptr;
 template <typename T, typename S>
-tbb::fixed_pool* BasePoolAllocator<T, S>::pool = nullptr;
+tbb_kahypar::fixed_pool* BasePoolAllocator<T, S>::pool = nullptr;
 
 template <typename T = char>
 using PoolAllocator = BasePoolAllocator<T, BaseAllocator::Malloc>;

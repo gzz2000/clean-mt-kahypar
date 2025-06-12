@@ -28,8 +28,8 @@
 
 #include "dynamic_graph_factory.h"
 
-#include <tbb/parallel_for.h>
-#include <tbb/parallel_invoke.h>
+#include <tbb_kahypar/parallel_for.h>
+#include <tbb_kahypar/parallel_invoke.h>
 
 #include "mt-kahypar/parallel/parallel_prefix_sum.h"
 #include "mt-kahypar/parallel/stl/scalable_vector.h"
@@ -49,7 +49,7 @@ DynamicGraph DynamicGraphFactory::construct(
 
   EdgeVector edges;
   edges.resize(num_edges);
-  tbb::parallel_for(UL(0), edge_vector.size(), [&](const size_t i) {
+  tbb_kahypar::parallel_for(UL(0), edge_vector.size(), [&](const size_t i) {
     const auto& e = edge_vector[i];
     if (e.size() != 2) {
       throw InvalidInputException(
@@ -73,9 +73,9 @@ DynamicGraph DynamicGraphFactory::construct_from_graph_edges(
   graph._num_edges = 2 * num_edges;
 
   // TODO: calculate required id range
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     graph._nodes.resize(num_nodes + 1);
-    tbb::parallel_for(ID(0), num_nodes, [&](const HypernodeID n) {
+    tbb_kahypar::parallel_for(ID(0), num_nodes, [&](const HypernodeID n) {
       // setup nodes
       DynamicGraph::Node& node = graph._nodes[n];
       node.enable();
@@ -110,14 +110,14 @@ std::pair<DynamicGraph, parallel::scalable_vector<HypernodeID> > DynamicGraphFac
   parallel::scalable_vector<HyperedgeID> he_mapping;
   // Computes a mapping for vertices and edges to a consecutive range of IDs
   // in the compactified hypergraph via a parallel prefix sum
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     hn_mapping.assign(graph.numNodes() + 1, 0);
     graph.doParallelForAllNodes([&](const HypernodeID hn) {
       hn_mapping[hn + 1] = ID(1);
     });
 
     parallel::TBBPrefixSum<HypernodeID, parallel::scalable_vector> hn_mapping_prefix_sum(hn_mapping);
-    tbb::parallel_scan(tbb::blocked_range<size_t>(
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(
       UL(0), graph.numNodes() + 1), hn_mapping_prefix_sum);
     num_nodes = hn_mapping_prefix_sum.total_sum();
   }, [&] {
@@ -129,7 +129,7 @@ std::pair<DynamicGraph, parallel::scalable_vector<HypernodeID> > DynamicGraphFac
     });
 
     parallel::TBBPrefixSum<HyperedgeID, parallel::scalable_vector> he_mapping_prefix_sum(he_mapping);
-    tbb::parallel_scan(tbb::blocked_range<size_t>(
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(
       UL(0), graph._num_edges + 1), he_mapping_prefix_sum);
     num_edges = he_mapping_prefix_sum.total_sum();
   });
@@ -138,7 +138,7 @@ std::pair<DynamicGraph, parallel::scalable_vector<HypernodeID> > DynamicGraphFac
   parallel::scalable_vector<std::pair<HypernodeID, HypernodeID>> edge_vector;
   parallel::scalable_vector<HyperedgeWeight> edge_weights;
   parallel::scalable_vector<HypernodeWeight> node_weights;
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     node_weights.resize(num_nodes);
     graph.doParallelForAllNodes([&](const HypernodeID hn) {
       const HypernodeID mapped_hn = hn_mapping[hn];
@@ -164,7 +164,7 @@ std::pair<DynamicGraph, parallel::scalable_vector<HypernodeID> > DynamicGraphFac
   compactified_graph._removed_degree_zero_hn_weight = graph._removed_degree_zero_hn_weight;
   compactified_graph._total_weight += graph._removed_degree_zero_hn_weight;
 
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     // Set community ids
     graph.doParallelForAllNodes([&](const HypernodeID& hn) {
       const HypernodeID mapped_hn = hn_mapping[hn];

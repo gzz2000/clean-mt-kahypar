@@ -55,7 +55,7 @@ namespace mt_kahypar::community_detection {
 
       timer.start_timer("project", "Project");
       // Prolong Clustering
-      tbb::parallel_for(UL(0), fine_graph.numNodes(), [&](const NodeID u) {
+      tbb_kahypar::parallel_for(UL(0), fine_graph.numNodes(), [&](const NodeID u) {
         ASSERT(communities[u] < static_cast<PartitionID>(coarse_communities.size()));
         communities[u] = coarse_communities[communities[u]];
       });

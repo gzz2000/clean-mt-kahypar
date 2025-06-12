@@ -29,7 +29,7 @@
 
 #include <queue>
 
-#include <tbb/parallel_sort.h>
+#include <tbb_kahypar/parallel_sort.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/datastructures/sparse_map.h"
@@ -337,7 +337,7 @@ void QuotientGraph<TypeTraits>::initialize(const PartitionedHypergraph& phg) {
   _searches.clear();
 
   // Find all cut hyperedges between the blocks
-  tbb::enumerable_thread_specific<HyperedgeID> local_num_hes(0);
+  tbb_kahypar::enumerable_thread_specific<HyperedgeID> local_num_hes(0);
   phg.doParallelForAllEdges([&](const HyperedgeID he) {
     ++local_num_hes.local();
     const HyperedgeWeight edge_weight = phg.edgeWeight(he);

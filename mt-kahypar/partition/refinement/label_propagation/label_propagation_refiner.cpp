@@ -27,7 +27,7 @@
 
 #include "mt-kahypar/partition/refinement/label_propagation/label_propagation_refiner.h"
 
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/parallel_for.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/partition/metrics.h"
@@ -245,7 +245,7 @@ namespace mt_kahypar {
       utils::Randomize::instance().parallelShuffleVector(
               _active_nodes, UL(0), _active_nodes.size());
 
-      tbb::parallel_for(UL(0), _active_nodes.size(), [&](const size_t& j) {
+      tbb_kahypar::parallel_for(UL(0), _active_nodes.size(), [&](const size_t& j) {
         const HypernodeID hn = _active_nodes[j];
         if ( moveVertex<unconstrained>(phg, hn, next_active_nodes, objective_delta) ) {
           if (should_mark_nodes) { _active_node_was_moved[j] = uint8_t(true); }
@@ -316,7 +316,7 @@ namespace mt_kahypar {
         }
       }
     } else {
-      tbb::parallel_for(UL(0), _active_nodes.size(), [&](const size_t j) {
+      tbb_kahypar::parallel_for(UL(0), _active_nodes.size(), [&](const size_t j) {
         if (_active_node_was_moved[j]) {
           node_fn(j);
         }
@@ -379,7 +379,7 @@ namespace mt_kahypar {
             set_old_part(i);
           }
         } else {
-          tbb::parallel_for(UL(0), refinement_nodes.size(), set_old_part);
+          tbb_kahypar::parallel_for(UL(0), refinement_nodes.size(), set_old_part);
         }
       }
     }

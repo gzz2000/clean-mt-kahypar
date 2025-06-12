@@ -30,7 +30,7 @@
 
 #include "kahypar-resources/meta/mandatory.h"
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/partition/metrics.h"
 #include "mt-kahypar/partition/context.h"
@@ -42,11 +42,11 @@ namespace mt_kahypar {
 template <class Derived = Mandatory,
           class AttributedGains = Mandatory>
 class GainComputationBase {
-  using DeltaGain = tbb::enumerable_thread_specific<Gain>;
+  using DeltaGain = tbb_kahypar::enumerable_thread_specific<Gain>;
 
  public:
   using RatingMap = ds::SparseMap<PartitionID, Gain>;
-  using TmpScores = tbb::enumerable_thread_specific<RatingMap>;
+  using TmpScores = tbb_kahypar::enumerable_thread_specific<RatingMap>;
 
   GainComputationBase(const Context& context,
                       const bool disable_randomization) :

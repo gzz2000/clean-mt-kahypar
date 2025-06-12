@@ -38,7 +38,7 @@
 #include "mt-kahypar/utils/progress_bar.h"
 #include "mt-kahypar/utils/cast.h"
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 namespace mt_kahypar {
 
@@ -152,8 +152,8 @@ private:
   vec<HypernodeID> propositions;
   vec<HypernodeWeight> cluster_weight, opportunistic_cluster_weight;
   ds::BufferedVector<HypernodeID> nodes_in_too_heavy_clusters;
-  tbb::enumerable_thread_specific<ds::SparseMap<HypernodeID, double>> default_rating_maps;
-  tbb::enumerable_thread_specific<vec<HypernodeID>> ties;
+  tbb_kahypar::enumerable_thread_specific<ds::SparseMap<HypernodeID, double>> default_rating_maps;
+  tbb_kahypar::enumerable_thread_specific<vec<HypernodeID>> ties;
   size_t pass;
   utils::ProgressBar progress_bar;
 

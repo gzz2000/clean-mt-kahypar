@@ -29,7 +29,7 @@
 #include <sstream>
 #include <mutex>
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/partition/initial_partitioning/initial_partitioning_commons.h"
 
@@ -334,7 +334,7 @@ class InitialPartitioningDataContainer {
     }
 
     void freeInternalData() {
-      tbb::parallel_invoke([&] {
+      tbb_kahypar::parallel_invoke([&] {
         _partitioned_hypergraph.freeInternalData();
       }, [&] {
         parallel::free(_partition);
@@ -353,8 +353,8 @@ class InitialPartitioningDataContainer {
     parallel::scalable_vector<utils::InitialPartitionerSummary> _stats;
   };
 
-  using ThreadLocalHypergraph = tbb::enumerable_thread_specific<LocalInitialPartitioningHypergraph>;
-  using ThreadLocalUnassignedHypernodes = tbb::enumerable_thread_specific<parallel::scalable_vector<HypernodeID>>;
+  using ThreadLocalHypergraph = tbb_kahypar::enumerable_thread_specific<LocalInitialPartitioningHypergraph>;
+  using ThreadLocalUnassignedHypernodes = tbb_kahypar::enumerable_thread_specific<parallel::scalable_vector<HypernodeID>>;
   using FixedVertexIterator = typename vec<HypernodeID>::const_iterator;
 
  public:
@@ -403,7 +403,7 @@ class InitialPartitioningDataContainer {
   InitialPartitioningDataContainer & operator= (InitialPartitioningDataContainer &&) = delete;
 
   ~InitialPartitioningDataContainer() {
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       parallel::parallel_free_thread_local_internal_data(
         _local_hg, [&](LocalInitialPartitioningHypergraph& local_hg) {
           local_hg.freeInternalData();
@@ -576,7 +576,7 @@ class InitialPartitioningDataContainer {
           }
         };
 
-        tbb::task_group fm_refinement_group;
+        tbb_kahypar::task_group fm_refinement_group;
         for (size_t i = 0; i < _best_partitions.size(); ++i) {
           fm_refinement_group.run(std::bind(refinement_task, i));
         }
@@ -603,7 +603,7 @@ class InitialPartitioningDataContainer {
       // Perform FM refinement on the best partition of each thread
       int thread_counter = 0;
       if ( _context.initial_partitioning.perform_refinement_on_best_partitions ) {
-        tbb::task_group fm_refinement_group;
+        tbb_kahypar::task_group fm_refinement_group;
         for ( LocalInitialPartitioningHypergraph& partition : _local_hg ) {
           fm_refinement_group.run([&, thread_counter] {
             partition.performRefinementOnBestPartition(_partitioned_hg.initialNumPins() + thread_counter);
@@ -702,11 +702,11 @@ class InitialPartitioningDataContainer {
   // TODO group these objects into one struct --> fewer hash tables
   ThreadLocalHypergraph _local_hg;
   ThreadLocalKWayPriorityQueue _local_kway_pq;
-  tbb::enumerable_thread_specific<bool> _is_local_pq_initialized;
+  tbb_kahypar::enumerable_thread_specific<bool> _is_local_pq_initialized;
   ThreadLocalFastResetFlagArray _local_hn_visited;
   ThreadLocalFastResetFlagArray _local_he_visited;
   ThreadLocalUnassignedHypernodes _local_unassigned_hypernodes;
-  tbb::enumerable_thread_specific<size_t> _local_unassigned_hypernode_pointer;
+  tbb_kahypar::enumerable_thread_specific<size_t> _local_unassigned_hypernode_pointer;
   vec<HypernodeID> _fixed_vertices;
 
   size_t _max_pop_size;

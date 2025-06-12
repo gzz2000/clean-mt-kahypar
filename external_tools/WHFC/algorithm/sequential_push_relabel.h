@@ -11,7 +11,7 @@
 namespace whfc {
 
     template<typename T>
-    using vec = std::vector<T, tbb::scalable_allocator<T>>;
+    using vec = std::vector<T, tbb_kahypar::scalable_allocator<T>>;
 
     class SequentialPushRelabel : public PushRelabelCommons {
     public:

@@ -54,7 +54,7 @@ vec<uint32_t> counting_sort(const InputRange& input, OutputRange& output,
 
     // thread local counting
     vec<vec<uint32_t>> thread_local_bucket_ends(num_tasks);   // use vector of vector to avoid false sharing. maybe even task-local vector and then copy?
-    tbb::parallel_for(size_t(0), num_tasks, [&](const size_t taskID) {
+    tbb_kahypar::parallel_for(size_t(0), num_tasks, [&](const size_t taskID) {
       vec<uint32_t>& bucket_ends = thread_local_bucket_ends[taskID];
       bucket_ends.resize(max_num_buckets, 0);
       for (auto[i,last] = chunking::bounds(taskID, n, chunk_size); i < last; ++i) {
@@ -64,7 +64,7 @@ vec<uint32_t> counting_sort(const InputRange& input, OutputRange& output,
 
     // prefix sum local bucket sizes for local offsets
     if (max_num_buckets > 1 << 10) {
-      tbb::parallel_for(UL(0), max_num_buckets, [&](size_t bucket) {
+      tbb_kahypar::parallel_for(UL(0), max_num_buckets, [&](size_t bucket) {
         for (size_t i = 1; i < num_tasks; ++i) {
           thread_local_bucket_ends[i][bucket] += thread_local_bucket_ends[i - 1][bucket]; // EVIL for locality!
         }
@@ -84,7 +84,7 @@ vec<uint32_t> counting_sort(const InputRange& input, OutputRange& output,
                         std::plus<>(), 0);
 
     // element assignment
-    tbb::parallel_for(size_t(0), num_tasks, [&](const size_t taskID) {
+    tbb_kahypar::parallel_for(size_t(0), num_tasks, [&](const size_t taskID) {
       vec<uint32_t>& bucketEnds = thread_local_bucket_ends[taskID];
       // reverse iteration makes the algorithm stable
       for (auto [first,i] = chunking::bounds(taskID, n, chunk_size); i > first; --i) {

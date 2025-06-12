@@ -28,11 +28,11 @@
 
 #include "mt-kahypar/datastructures/dynamic_graph.h"
 
-#include <tbb/blocked_range.h>
-#include <tbb/parallel_scan.h>
-#include <tbb/parallel_sort.h>
-#include <tbb/parallel_reduce.h>
-#include <tbb/concurrent_queue.h>
+#include <tbb_kahypar/blocked_range.h>
+#include <tbb_kahypar/parallel_scan.h>
+#include <tbb_kahypar/parallel_sort.h>
+#include <tbb_kahypar/parallel_reduce.h>
+#include <tbb_kahypar/concurrent_queue.h>
 
 #include "mt-kahypar/parallel/stl/scalable_queue.h"
 #include "mt-kahypar/datastructures/concurrent_bucket_map.h"
@@ -44,8 +44,8 @@ namespace ds {
 
 // ! Recomputes the total weight of the hypergraph (parallel)
 void DynamicGraph::updateTotalWeight(parallel_tag_t) {
-  _total_weight = tbb::parallel_reduce(tbb::blocked_range<HypernodeID>(ID(0), numNodes()), 0,
-    [this](const tbb::blocked_range<HypernodeID>& range, HypernodeWeight init) {
+  _total_weight = tbb_kahypar::parallel_reduce(tbb_kahypar::blocked_range<HypernodeID>(ID(0), numNodes()), 0,
+    [this](const tbb_kahypar::blocked_range<HypernodeID>& range, HypernodeWeight init) {
       HypernodeWeight weight = init;
       for (HypernodeID hn = range.begin(); hn < range.end(); ++hn) {
         if ( nodeIsEnabled(hn) ) {
@@ -214,7 +214,7 @@ void DynamicGraph::uncontract(const Batch& batch,
     return true;
   }(), "Batch contains uncontractions from different batches or from a different hypergraph version");
 
-  tbb::parallel_for(UL(0), batch.size(), [&](const size_t i) {
+  tbb_kahypar::parallel_for(UL(0), batch.size(), [&](const size_t i) {
     const Memento& memento = batch[i];
     ASSERT(!hypernode(memento.u).isDisabled(), "Hypernode" << memento.u << "is disabled");
     ASSERT(hypernode(memento.v).isDisabled(), "Hypernode" << memento.v << "is not invalid");
@@ -306,7 +306,7 @@ DynamicGraph DynamicGraph::copy(parallel_tag_t) const {
   hypergraph._version = _version;
   hypergraph._contraction_index.store(_contraction_index.load());
 
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     hypergraph._nodes.resize(_nodes.size());
     memcpy(hypergraph._nodes.data(), _nodes.data(),
       sizeof(Node) * _nodes.size());
@@ -314,7 +314,7 @@ DynamicGraph DynamicGraph::copy(parallel_tag_t) const {
     hypergraph._adjacency_array = _adjacency_array.copy(parallel_tag_t());
   }, [&] {
     hypergraph._acquired_nodes.resize(_acquired_nodes.size());
-    tbb::parallel_for(ID(0), numNodes(), [&](const HypernodeID& hn) {
+    tbb_kahypar::parallel_for(ID(0), numNodes(), [&](const HypernodeID& hn) {
       hypergraph._acquired_nodes[hn] = _acquired_nodes[hn];
     });
   }, [&] {
@@ -370,7 +370,7 @@ void DynamicGraph::memoryConsumption(utils::MemoryTreeNode* parent) const {
 // ! Only for testing
 bool DynamicGraph::verifyIncidenceArrayAndIncidentNets() {
   bool success = true;
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     doParallelForAllNodes([&](const HypernodeID& hn) {
       for ( const HyperedgeID& he : incidentEdges(hn) ) {
         if (edgeSource(he) != hn) {

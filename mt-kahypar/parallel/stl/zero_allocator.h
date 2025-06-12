@@ -26,13 +26,13 @@
 
 #pragma once
 
-#include <tbb/tbb_allocator.h>
+#include <tbb_kahypar/tbb_allocator.h>
 
 namespace mt_kahypar {
 namespace parallel {
 
 template <typename T>
-class zero_allocator : public tbb::tbb_allocator<T> {
+class zero_allocator : public tbb_kahypar::tbb_allocator<T> {
  public:
   using value_type = T;
   using propagate_on_container_move_assignment = std::true_type;
@@ -43,7 +43,7 @@ class zero_allocator : public tbb::tbb_allocator<T> {
   explicit zero_allocator(const U&) noexcept {}
 
   T* allocate(std::size_t n) {
-    T* ptr = tbb::tbb_allocator<T>::allocate(n);
+    T* ptr = tbb_kahypar::tbb_allocator<T>::allocate(n);
     std::memset(static_cast<void*>(ptr), 0, n * sizeof(value_type));
     return ptr;
   }

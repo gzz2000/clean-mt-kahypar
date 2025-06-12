@@ -26,9 +26,9 @@
 
 #include "mt-kahypar/partition/refinement/gains/soed/soed_gain_cache.h"
 
-#include <tbb/parallel_for.h>
-#include <tbb/enumerable_thread_specific.h>
-#include <tbb/concurrent_vector.h>
+#include <tbb_kahypar/parallel_for.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
+#include <tbb_kahypar/concurrent_vector.h>
 
 #include "mt-kahypar/definitions.h"
 
@@ -45,11 +45,11 @@ void SoedGainCache::initializeGainCache(const PartitionedHypergraph& partitioned
   // Gain calculation consist of two stages
   //  1. Compute gain of all low degree vertices
   //  2. Compute gain of all high degree vertices
-  tbb::enumerable_thread_specific< vec<HyperedgeWeight> > ets_mtb(_k, 0);
-  tbb::concurrent_vector<HypernodeID> high_degree_vertices;
+  tbb_kahypar::enumerable_thread_specific< vec<HyperedgeWeight> > ets_mtb(_k, 0);
+  tbb_kahypar::concurrent_vector<HypernodeID> high_degree_vertices;
   // Compute gain of all low degree vertices
-  tbb::parallel_for(tbb::blocked_range<HypernodeID>(HypernodeID(0), partitioned_hg.initialNumNodes()),
-    [&](tbb::blocked_range<HypernodeID>& r) {
+  tbb_kahypar::parallel_for(tbb_kahypar::blocked_range<HypernodeID>(HypernodeID(0), partitioned_hg.initialNumNodes()),
+    [&](tbb_kahypar::blocked_range<HypernodeID>& r) {
       vec<HyperedgeWeight>& benefit_aggregator = ets_mtb.local();
       for (HypernodeID u = r.begin(); u < r.end(); ++u) {
         if ( partitioned_hg.nodeIsEnabled(u)) {
@@ -86,11 +86,11 @@ void SoedGainCache::initializeGainCache(const PartitionedHypergraph& partitioned
 
   // Compute gain of all high degree vertices
   for ( const HypernodeID& u : high_degree_vertices ) {
-    tbb::enumerable_thread_specific<HyperedgeWeight> ets_mfp(0);
+    tbb_kahypar::enumerable_thread_specific<HyperedgeWeight> ets_mfp(0);
     const PartitionID from = partitioned_hg.partID(u);
     const HypernodeID degree_of_u = partitioned_hg.nodeDegree(u);
-    tbb::parallel_for(tbb::blocked_range<HypernodeID>(ID(0), degree_of_u),
-      [&](tbb::blocked_range<HypernodeID>& r) {
+    tbb_kahypar::parallel_for(tbb_kahypar::blocked_range<HypernodeID>(ID(0), degree_of_u),
+      [&](tbb_kahypar::blocked_range<HypernodeID>& r) {
       vec<HyperedgeWeight>& benefit_aggregator = ets_mtb.local();
       HyperedgeWeight& penalty_aggregator = ets_mfp.local();
       size_t current_pos = r.begin();

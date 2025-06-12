@@ -28,7 +28,7 @@
 #pragma once
 
 
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/parallel_for.h>
 
 #include "include/mtkahypartypes.h"
 
@@ -350,7 +350,7 @@ class StaticHypergraph {
     explicit TmpContractionBuffer(const HypernodeID num_hypernodes,
                                   const HyperedgeID num_hyperedges,
                                   const HyperedgeID num_pins) {
-      tbb::parallel_invoke([&] {
+      tbb_kahypar::parallel_invoke([&] {
         mapping.resize("Coarsening", "mapping", num_hypernodes);
       }, [&] {
         tmp_hypernodes.resize("Coarsening", "tmp_hypernodes", num_hypernodes);
@@ -534,7 +534,7 @@ class StaticHypergraph {
   // ! for each vertex
   template<typename F>
   void doParallelForAllNodes(const F& f) const {
-    tbb::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID& hn) {
+    tbb_kahypar::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID& hn) {
       if ( nodeIsEnabled(hn) ) {
         f(hn);
       }
@@ -545,7 +545,7 @@ class StaticHypergraph {
   // ! for each net
   template<typename F>
   void doParallelForAllEdges(const F& f) const {
-    tbb::parallel_for(ID(0), _num_hyperedges, [&](const HyperedgeID& he) {
+    tbb_kahypar::parallel_for(ID(0), _num_hyperedges, [&](const HyperedgeID& he) {
       if ( edgeIsEnabled(he) ) {
         f(he);
       }
@@ -799,7 +799,7 @@ class StaticHypergraph {
     ASSERT(edgeIsEnabled(he), "Hyperedge" << he << "is disabled");
     const size_t incidence_array_start = hyperedge(he).firstEntry();
     const size_t incidence_array_end = hyperedge(he).firstInvalidEntry();
-    tbb::parallel_for(incidence_array_start, incidence_array_end, [&](const size_t pos) {
+    tbb_kahypar::parallel_for(incidence_array_start, incidence_array_end, [&](const size_t pos) {
       const HypernodeID pin = _incidence_array[pos];
       removeIncidentEdgeFromHypernode(he, pin);
     });
@@ -814,7 +814,7 @@ class StaticHypergraph {
     enableHyperedge(he);
     const size_t incidence_array_start = hyperedge(he).firstEntry();
     const size_t incidence_array_end = hyperedge(he).firstInvalidEntry();
-    tbb::parallel_for(incidence_array_start, incidence_array_end, [&](const size_t pos) {
+    tbb_kahypar::parallel_for(incidence_array_start, incidence_array_end, [&](const size_t pos) {
       const HypernodeID pin = _incidence_array[pos];
       insertIncidentEdgeToHypernode(he, pin);
     });

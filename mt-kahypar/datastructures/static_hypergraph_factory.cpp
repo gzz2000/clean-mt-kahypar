@@ -27,8 +27,8 @@
 
 #include "static_hypergraph_factory.h"
 
-#include <tbb/parallel_for.h>
-#include <tbb/parallel_invoke.h>
+#include <tbb_kahypar/parallel_for.h>
+#include <tbb_kahypar/parallel_invoke.h>
 
 #include "mt-kahypar/parallel/parallel_prefix_sum.h"
 #include "mt-kahypar/utils/timer.h"
@@ -54,8 +54,8 @@ namespace mt_kahypar::ds {
     // of incident nets per vertex
     Counter num_pins_per_hyperedge(num_hyperedges, 0);
     ThreadLocalCounter local_incident_nets_per_vertex(num_hypernodes, 0);
-    tbb::enumerable_thread_specific<size_t> local_max_edge_size(UL(0));
-    tbb::parallel_for(ID(0), num_hyperedges, [&](const size_t pos) {
+    tbb_kahypar::enumerable_thread_specific<size_t> local_max_edge_size(UL(0));
+    tbb_kahypar::parallel_for(ID(0), num_hyperedges, [&](const size_t pos) {
       Counter& num_incident_nets_per_vertex = local_incident_nets_per_vertex.local();
       num_pins_per_hyperedge[pos] = edge_vector[pos].size();
       local_max_edge_size.local() = std::max(
@@ -75,7 +75,7 @@ namespace mt_kahypar::ds {
     // over each thread local counter and sum it up.
     Counter num_incident_nets_per_vertex(num_hypernodes, 0);
     for ( Counter& c : local_incident_nets_per_vertex ) {
-      tbb::parallel_for(ID(0), num_hypernodes, [&](const size_t pos) {
+      tbb_kahypar::parallel_for(ID(0), num_hypernodes, [&](const size_t pos) {
         num_incident_nets_per_vertex[pos] += c[pos];
       });
     }
@@ -86,11 +86,11 @@ namespace mt_kahypar::ds {
     // resp. incident nets array.
     parallel::TBBPrefixSum<size_t> pin_prefix_sum(num_pins_per_hyperedge);
     parallel::TBBPrefixSum<size_t> incident_net_prefix_sum(num_incident_nets_per_vertex);
-    tbb::parallel_invoke([&] {
-      tbb::parallel_scan(tbb::blocked_range<size_t>(
+    tbb_kahypar::parallel_invoke([&] {
+      tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(
               UL(0), UI64(num_hyperedges)), pin_prefix_sum);
     }, [&] {
-      tbb::parallel_scan(tbb::blocked_range<size_t>(
+      tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(
               UL(0), UI64(num_hypernodes)), incident_net_prefix_sum);
     });
 
@@ -104,7 +104,7 @@ namespace mt_kahypar::ds {
                                          parallel::IntegralAtomicWrapper<size_t>(0));
 
     auto setup_hyperedges = [&] {
-      tbb::parallel_for(ID(0), num_hyperedges, [&](const size_t pos) {
+      tbb_kahypar::parallel_for(ID(0), num_hyperedges, [&](const size_t pos) {
         StaticHypergraph::Hyperedge& hyperedge = hypergraph._hyperedges[pos];
         hyperedge.enable();
         hyperedge.setFirstEntry(pin_prefix_sum[pos]);
@@ -129,7 +129,7 @@ namespace mt_kahypar::ds {
     };
 
     auto setup_hypernodes = [&] {
-      tbb::parallel_for(ID(0), num_hypernodes, [&](const size_t pos) {
+      tbb_kahypar::parallel_for(ID(0), num_hypernodes, [&](const size_t pos) {
         StaticHypergraph::Hypernode& hypernode = hypergraph._hypernodes[pos];
         hypernode.enable();
         hypernode.setFirstEntry(incident_net_prefix_sum[pos]);
@@ -144,11 +144,11 @@ namespace mt_kahypar::ds {
       hypergraph._community_ids.resize(num_hypernodes, 0);
     };
 
-    tbb::parallel_invoke(setup_hyperedges, setup_hypernodes, init_communities);
+    tbb_kahypar::parallel_invoke(setup_hyperedges, setup_hypernodes, init_communities);
 
     if (stable_construction_of_incident_edges) {
       // sort incident hyperedges of each node, so their ordering is independent of scheduling (and the same as a typical sequential implementation)
-      tbb::parallel_for(ID(0), num_hypernodes, [&](HypernodeID u) {
+      tbb_kahypar::parallel_for(ID(0), num_hypernodes, [&](HypernodeID u) {
         auto b = hypergraph._incident_nets.begin() + hypergraph.hypernode(u).firstEntry();
         auto e = hypergraph._incident_nets.begin() + hypergraph.hypernode(u).firstInvalidEntry();
         std::sort(b, e);

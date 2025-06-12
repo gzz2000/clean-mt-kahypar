@@ -29,10 +29,10 @@
 #include <boost_kahypar/range/irange.hpp>
 #include "gmock/gmock.h"
 
-#include <tbb/blocked_range.h>
-#include <tbb/enumerable_thread_specific.h>
-#include <tbb/task_arena.h>
-#include <tbb/task_group.h>
+#include <tbb_kahypar/blocked_range.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
+#include <tbb_kahypar/task_arena.h>
+#include <tbb_kahypar/task_group.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/io/hypergraph_factory.h"
@@ -138,7 +138,7 @@ void moveAllNodesOfHypergraphRandom(HyperGraph& hypergraph,
                                     const Objective objective,
                                     const bool show_timings) {
 
-  tbb::enumerable_thread_specific<HyperedgeWeight> deltas(0);
+  tbb_kahypar::enumerable_thread_specific<HyperedgeWeight> deltas(0);
 
   auto objective_delta = [&](const SynchronizedEdgeUpdate& sync_update) {
                            if (objective == Objective::km1) {
@@ -150,7 +150,7 @@ void moveAllNodesOfHypergraphRandom(HyperGraph& hypergraph,
 
   HyperedgeWeight metric_before = metrics::quality(hypergraph, objective);
   HighResClockTimepoint start = std::chrono::high_resolution_clock::now();
-  tbb::parallel_for(ID(0), hypergraph.initialNumNodes(), [&](const HypernodeID& hn) {
+  tbb_kahypar::parallel_for(ID(0), hypergraph.initialNumNodes(), [&](const HypernodeID& hn) {
     int cpu_id = THREAD_ID;
     const PartitionID from = hypergraph.partID(hn);
     PartitionID to = -1;

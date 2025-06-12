@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <tbb/parallel_invoke.h>
+#include <tbb_kahypar/parallel_invoke.h>
 
 #include "mt-kahypar/datastructures/pin_count_in_part.h"
 #include "mt-kahypar/datastructures/connectivity_set.h"
@@ -56,7 +56,7 @@ class ConnectivityInfo {
                    parallel_tag_t) :
     _pin_counts(),
     _con_set() {
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       _pin_counts.initialize(num_hyperedges, k, max_value, true);
     }, [&] {
       _con_set = ConnectivitySets(num_hyperedges, k, true);
@@ -151,7 +151,7 @@ class ConnectivityInfo {
 
   void reset(const bool reset_parallel = false) {
     if ( reset_parallel ) {
-      tbb::parallel_invoke(
+      tbb_kahypar::parallel_invoke(
         [&] { _pin_counts.reset(true); },
         [&] { _con_set.reset(true); });
     } else {
@@ -161,7 +161,7 @@ class ConnectivityInfo {
   }
 
   void freeInternalData() {
-    tbb::parallel_invoke(
+    tbb_kahypar::parallel_invoke(
       [&] { _pin_counts.freeInternalData(); },
       [&] { _con_set.freeInternalData(); });
   }

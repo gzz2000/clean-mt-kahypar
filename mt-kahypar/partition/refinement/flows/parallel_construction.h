@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include <tbb/concurrent_vector.h>
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/concurrent_vector.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "algorithm/hyperflowcutter.h"
 #include "algorithm/parallel_push_relabel.h"
@@ -74,7 +74,7 @@ class ParallelConstruction {
       const uint32_t threshold;
     };
 
-    using IdenticalNetVector = tbb::concurrent_vector<
+    using IdenticalNetVector = tbb_kahypar::concurrent_vector<
       ThresholdHyperedge, parallel::zero_allocator<ThresholdHyperedge>>;
 
     struct HashBucket {
@@ -177,8 +177,8 @@ class ParallelConstruction {
 
   ds::ConcurrentFlatMap<HypernodeID, whfc::Node> _node_to_whfc;
   ds::ThreadSafeFastResetFlagArray<> _visited_hns;
-  tbb::enumerable_thread_specific<vec<whfc::Node>> _tmp_pins;
-  tbb::concurrent_vector<TmpHyperedge> _cut_hes;
+  tbb_kahypar::enumerable_thread_specific<vec<whfc::Node>> _tmp_pins;
+  tbb_kahypar::concurrent_vector<TmpHyperedge> _cut_hes;
 
   ds::ConcurrentBucketMap<TmpPin> _pins;
   ds::ConcurrentFlatMap<HyperedgeID, HyperedgeID> _he_to_whfc;

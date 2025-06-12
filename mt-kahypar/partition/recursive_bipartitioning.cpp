@@ -27,7 +27,7 @@
 
 #include "mt-kahypar/partition/recursive_bipartitioning.h"
 
-#include <tbb/task_group.h>
+#include <tbb_kahypar/task_group.h>
 
 #include <algorithm>
 #include <vector>
@@ -312,7 +312,7 @@ namespace rb {
         DBG << "Current k = " << context.partition.k << "\n"
             << "Block" << block_0 << "is further partitioned into k =" << rb_k0 << "blocks\n"
             << "Block" << block_1 << "is further partitioned into k =" << rb_k1 << "blocks\n";
-        tbb::task_group tg;
+        tbb_kahypar::task_group tg;
         tg.run([&] { recursively_bipartition_block<TypeTraits>(phg, context, block_0, 0, rb_k0, info, already_cut, 0.5); });
         tg.run([&] { recursively_bipartition_block<TypeTraits>(phg, context, block_1, rb_k0, rb_k0 + rb_k1, info, already_cut, 0.5); });
         tg.wait();

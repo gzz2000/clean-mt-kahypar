@@ -1,7 +1,7 @@
 /*******************************************************************************
  * wrapper/tbb_hm_wrapper.h
  *
- * Wrapper to use tbb's tbb::concurrent_hash_map in our benchmarks
+ * Wrapper to use tbb's tbb_kahypar::concurrent_hash_map in our benchmarks
  *
  * Part of Project growt - https://github.com/TooBiased/growt.git
  *
@@ -16,7 +16,7 @@
 #include <atomic>
 #include <memory>
 #include <string>
-#include <tbb/concurrent_hash_map.h>
+#include <tbb_kahypar/concurrent_hash_map.h>
 
 #include "data-structures/hash_table_mods.hpp"
 #include "data-structures/returnelement.hpp"
@@ -45,7 +45,7 @@ class tbb_hm_wrapper
 {
   private:
     using intern_table_type =
-        tbb::concurrent_hash_map<Key, Data, hash_comparison<Key, Hasher> >;
+        tbb_kahypar::concurrent_hash_map<Key, Data, hash_comparison<Key, Hasher> >;
     using accessor_type = typename intern_table_type::accessor;
 
     intern_table_type hash;

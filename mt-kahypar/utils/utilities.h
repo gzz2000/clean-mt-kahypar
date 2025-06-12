@@ -28,7 +28,7 @@
 
 #include <mutex>
 
-#include <tbb/concurrent_vector.h>
+#include <tbb_kahypar/concurrent_vector.h>
 
 #include "mt-kahypar/macros.h"
 #include "mt-kahypar/utils/stats.h"
@@ -92,7 +92,7 @@ class Utilities {
     _utilities() { }
 
   std::mutex _utility_mutex;
-  tbb::concurrent_vector<UtilityObjects> _utilities;
+  tbb_kahypar::concurrent_vector<UtilityObjects> _utilities;
 };
 
 }  // namespace utils

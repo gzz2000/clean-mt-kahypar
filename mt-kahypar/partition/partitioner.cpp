@@ -27,8 +27,8 @@
 
 #include "partitioner.h"
 
-#include <tbb/parallel_sort.h>
-#include <tbb/parallel_reduce.h>
+#include <tbb_kahypar/parallel_sort.h>
+#include <tbb_kahypar/parallel_reduce.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/io/partitioning_output.h"
@@ -81,16 +81,16 @@ namespace mt_kahypar {
           he_sizes[he] = hypergraph.edgeSize(he);
         });
         // Sort hyperedges in decreasing order of their sizes
-        tbb::parallel_sort(he_sizes.begin(), he_sizes.end(),
+        tbb_kahypar::parallel_sort(he_sizes.begin(), he_sizes.end(),
           [&](const HypernodeID& lhs, const HypernodeID& rhs) {
             return lhs > rhs;
           });
         const size_t percentile = context.mapping.largest_he_fraction * hypergraph.initialNumEdges();
         // Compute the percentage of pins covered by the largest hyperedges
         const double covered_pins_percentage =
-          static_cast<double>(tbb::parallel_reduce(
-            tbb::blocked_range<size_t>(UL(0), percentile),
-            0, [&](const tbb::blocked_range<size_t>& range, int init) {
+          static_cast<double>(tbb_kahypar::parallel_reduce(
+            tbb_kahypar::blocked_range<size_t>(UL(0), percentile),
+            0, [&](const tbb_kahypar::blocked_range<size_t>& range, int init) {
                   for ( size_t i = range.begin(); i < range.end(); ++i ) {
                     init += he_sizes[i];
                   }
@@ -193,8 +193,8 @@ namespace mt_kahypar {
     if (Hypergraph::is_graph) {
       return true;
     }
-    return tbb::parallel_reduce(tbb::blocked_range<HyperedgeID>(
-            ID(0), hypergraph.initialNumEdges()), true, [&](const tbb::blocked_range<HyperedgeID>& range, bool isGraph) {
+    return tbb_kahypar::parallel_reduce(tbb_kahypar::blocked_range<HyperedgeID>(
+            ID(0), hypergraph.initialNumEdges()), true, [&](const tbb_kahypar::blocked_range<HyperedgeID>& range, bool isGraph) {
       if ( isGraph ) {
         bool tmp_is_graph = isGraph;
         for (HyperedgeID he = range.begin(); he < range.end(); ++he) {
@@ -225,7 +225,7 @@ namespace mt_kahypar {
     }
 
     // test whether 99.9th percentile hypernode degree is at most 4 times the average degree
-    tbb::enumerable_thread_specific<size_t> num_high_degree_nodes(0);
+    tbb_kahypar::enumerable_thread_specific<size_t> num_high_degree_nodes(0);
     graph.doParallelForAllNodes([&](const HypernodeID& node) {
       if (graph.nodeDegree(node) > 4 * avg_hn_degree) {
         num_high_degree_nodes.local() += 1;

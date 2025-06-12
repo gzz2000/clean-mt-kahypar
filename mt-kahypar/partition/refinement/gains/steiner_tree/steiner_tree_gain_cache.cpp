@@ -26,9 +26,9 @@
 
 #include "mt-kahypar/partition/refinement/gains/steiner_tree/steiner_tree_gain_cache.h"
 
-#include <tbb/parallel_for.h>
-#include <tbb/enumerable_thread_specific.h>
-#include <tbb/concurrent_vector.h>
+#include <tbb_kahypar/parallel_for.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
+#include <tbb_kahypar/concurrent_vector.h>
 
 #include "mt-kahypar/definitions.h"
 
@@ -43,8 +43,8 @@ void SteinerTreeGainCache::initializeGainCache(const PartitionedHypergraph& part
   initializeAdjacentBlocks(partitioned_hg);
 
   // Compute gain of all nodes
-  tbb::parallel_for(tbb::blocked_range<HypernodeID>(HypernodeID(0), partitioned_hg.initialNumNodes()),
-    [&](tbb::blocked_range<HypernodeID>& r) {
+  tbb_kahypar::parallel_for(tbb_kahypar::blocked_range<HypernodeID>(HypernodeID(0), partitioned_hg.initialNumNodes()),
+    [&](tbb_kahypar::blocked_range<HypernodeID>& r) {
       vec<HyperedgeWeight>& benefit_aggregator = _ets_benefit_aggregator.local();
       for (HypernodeID u = r.begin(); u < r.end(); ++u) {
         if ( partitioned_hg.nodeIsEnabled(u)) {

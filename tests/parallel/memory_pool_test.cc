@@ -27,7 +27,7 @@
 #include <atomic>
 
 #include "gmock/gmock.h"
-#include <tbb/task_group.h>
+#include <tbb_kahypar/task_group.h>
 
 #include "mt-kahypar/parallel/memory_pool.h"
 
@@ -39,7 +39,7 @@ namespace parallel {
 template <class F, class K>
 void executeConcurrent(F f1, K f2) {
   std::atomic<int> cnt(0);
-  tbb::task_group group;
+  tbb_kahypar::task_group group;
 
   group.run([&] {
         cnt++;

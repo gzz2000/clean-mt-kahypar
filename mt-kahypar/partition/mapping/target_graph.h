@@ -30,7 +30,7 @@
 #include <numeric>
 #include <iostream>
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #ifdef KAHYPAR_USE_GROWT
 #ifdef __clang__
@@ -51,7 +51,7 @@
 #pragma clang diagnostic pop
 #endif
 #else
-#include <tbb/concurrent_unordered_map.h>
+#include <tbb_kahypar/concurrent_unordered_map.h>
 #endif
 
 #include "mt-kahypar/macros.h"
@@ -78,7 +78,7 @@ class TargetGraph {
     uint64_t, uint64_t, hasher_type, allocator_type, hmod::growable, hmod::sync>::table_type;
   using HashTableHandle = typename ConcurrentHashTable::handle_type;
   #else
-  using ConcurrentHashTable = tbb::concurrent_unordered_map<uint64_t, uint64_t>;
+  using ConcurrentHashTable = tbb_kahypar::concurrent_unordered_map<uint64_t, uint64_t>;
   #endif
 
   struct MSTData {
@@ -281,14 +281,14 @@ class TargetGraph {
   vec<HyperedgeWeight> _distances;
 
   // ! Data structures to compute MST for non-precomputed connectivity sets
-  mutable tbb::enumerable_thread_specific<MSTData> _local_mst_data;
+  mutable tbb_kahypar::enumerable_thread_specific<MSTData> _local_mst_data;
 
   // ! Cache stores the weight of MST computations
   mutable ConcurrentHashTable _cache;
 
   #ifdef KAHYPAR_USE_GROWT
   // ! Handle to access concurrent hash table
-  mutable tbb::enumerable_thread_specific<HashTableHandle> _handles;
+  mutable tbb_kahypar::enumerable_thread_specific<HashTableHandle> _handles;
   #endif
 
   // ! Stats

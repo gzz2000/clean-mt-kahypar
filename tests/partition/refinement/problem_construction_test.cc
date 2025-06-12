@@ -113,7 +113,7 @@ template <class F, class K>
 void executeConcurrent(F f1, K f2) {
   std::atomic<int> cnt(0);
 
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     cnt++;
     while (cnt < 2) { }
     f1();

@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <tbb/parallel_invoke.h>
+#include <tbb_kahypar/parallel_invoke.h>
 
 #include "mt-kahypar/partition/refinement/fm/fm_commons.h"
 
@@ -113,7 +113,7 @@ private:
   // ! Factor to multiply max part weight with, in order to relax or disable the balance criterion. Set to zero for disabling
   double max_part_weight_scaling;
 
-  tbb::enumerable_thread_specific< vec<RecalculationData> > ets_recalc_data;
+  tbb_kahypar::enumerable_thread_specific< vec<RecalculationData> > ets_recalc_data;
   vec<CAtomic<uint32_t>> last_recalc_round;
   uint32_t round;
 };

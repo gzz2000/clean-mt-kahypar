@@ -1,7 +1,7 @@
 /*******************************************************************************
  * wrapper/tbb_um_wrapper.h
  *
- * Wrapper to use tbb's tbb::concurrent_unordered_map in our benchmarks
+ * Wrapper to use tbb's tbb_kahypar::concurrent_unordered_map in our benchmarks
  *
  * Part of Project growt - https://github.com/TooBiased/growt.git
  *
@@ -16,7 +16,7 @@
 #include <atomic>
 #include <memory>
 #include <string>
-#include <tbb/concurrent_unordered_map.h>
+#include <tbb_kahypar/concurrent_unordered_map.h>
 
 #include "data-structures/hash_table_mods.hpp"
 #include "data-structures/returnelement.hpp"
@@ -26,7 +26,7 @@ using namespace growt;
 template <class Key, class Data, class Hasher, class Alloc> class tbb_um_wrapper
 {
   private:
-    using HashType = tbb::concurrent_unordered_map<Key, Data, Hasher>;
+    using HashType = tbb_kahypar::concurrent_unordered_map<Key, Data, Hasher>;
 
     HashType hash;
 

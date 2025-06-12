@@ -30,7 +30,7 @@
 
 #include "kahypar-resources/meta/policy_registry.h"
 
-#include <tbb/parallel_invoke.h>
+#include <tbb_kahypar/parallel_invoke.h>
 
 #include "mt-kahypar/partition/context.h"
 #include "mt-kahypar/partition/mapping/target_graph.h"
@@ -302,7 +302,7 @@ class SteinerTreeGainCache {
                          const PartitionID k) {
     if (_gain_cache.size() == 0 && k != kInvalidPartition) {
       _k = k;
-      tbb::parallel_invoke([&] {
+      tbb_kahypar::parallel_invoke([&] {
         _gain_cache.resize(
           "Refinement", "gain_cache", num_nodes * _k, true);
       }, [&] {
@@ -383,7 +383,7 @@ class SteinerTreeGainCache {
   ds::Array< CAtomic<HyperedgeWeight> > _gain_cache;
 
   // ! Thread-local for initializing gain cache entries
-  tbb::enumerable_thread_specific<vec<Gain>> _ets_benefit_aggregator;
+  tbb_kahypar::enumerable_thread_specific<vec<Gain>> _ets_benefit_aggregator;
 
   // ! This array stores the number of incident hyperedges that contains
   // ! pins of a particular block for each node.
@@ -399,7 +399,7 @@ class SteinerTreeGainCache {
   vec<HyperedgeState> _version;
 
   // ! Array to store version IDs when we lazily initialize a gain cache entry
-  tbb::enumerable_thread_specific<vec<uint32_t>> _ets_version;
+  tbb_kahypar::enumerable_thread_specific<vec<uint32_t>> _ets_version;
 
   // ! Threshold for the size of a hyperedge that we do not count when tracking adjacent blocks
   HypernodeID _large_he_threshold;

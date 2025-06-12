@@ -30,9 +30,9 @@
 
 #include <boost_kahypar/dynamic_bitset.hpp>
 
-#include <tbb/parallel_for_each.h>
-#include <tbb/enumerable_thread_specific.h>
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/parallel_for_each.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
+#include <tbb_kahypar/parallel_for.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/partition/metrics.h"
@@ -76,7 +76,7 @@ namespace mt_kahypar {
       // Moves that would worsen the solution quality are gathered in a thread local priority queue
       // and processed afterwards if partition is still imbalanced
       std::atomic<size_t> idx(0);
-      tbb::enumerable_thread_specific<IndexedMovePQ> move_pqs([&] {
+      tbb_kahypar::enumerable_thread_specific<IndexedMovePQ> move_pqs([&] {
         return IndexedMovePQ(idx++);
       });
       phg.doParallelForAllNodes([&](const HypernodeID& hn) {
@@ -138,7 +138,7 @@ namespace mt_kahypar {
         // PQ is within a certain threshold of the global minimum gain value.
         // Otherwise, we perform busy waiting until all moves with a better gain
         // are processed.
-        tbb::parallel_for_each(move_pqs, [&](IndexedMovePQ& idx_pq) {
+        tbb_kahypar::parallel_for_each(move_pqs, [&](IndexedMovePQ& idx_pq) {
           const size_t idx = idx_pq.idx;
           MovePQ& pq = idx_pq.pq;
           active_pqs[idx] = true;
@@ -203,11 +203,11 @@ namespace mt_kahypar {
     // If so, find the best vertices to move to that block
     while (is_empty.any()) {
 
-      tbb::enumerable_thread_specific< vec<Gain> > ets_scores(k, 0);
+      tbb_kahypar::enumerable_thread_specific< vec<Gain> > ets_scores(k, 0);
 
       // positive gain values correspond to "good" improvement. MovePQ uses std::greater (MinHeap)
       // --> stores worst gains at the top where we can eject them
-      tbb::enumerable_thread_specific< vec< vec<Move> > > ets_best_move(k);
+      tbb_kahypar::enumerable_thread_specific< vec< vec<Move> > > ets_best_move(k);
 
       phg.doParallelForAllNodes([&](const HypernodeID u) {
         if ( !phg.isFixed(u) ) {

@@ -40,7 +40,7 @@
 
 #undef __TBB_ARENA_OBSERVER
 #define __TBB_ARENA_OBSERVER true
-#include <tbb/task_scheduler_observer.h>
+#include <tbb_kahypar/task_scheduler_observer.h>
 #undef __TBB_ARENA_OBSERVER
 
 #include "mt-kahypar/macros.h"
@@ -51,8 +51,8 @@ namespace mt_kahypar {
 namespace parallel {
 
 template <typename HwTopology>
-class ThreadPinningObserver : public tbb::task_scheduler_observer {
-  using Base = tbb::task_scheduler_observer;
+class ThreadPinningObserver : public tbb_kahypar::task_scheduler_observer {
+  using Base = tbb_kahypar::task_scheduler_observer;
 
   static constexpr bool debug = false;
 
@@ -60,7 +60,7 @@ class ThreadPinningObserver : public tbb::task_scheduler_observer {
 
   // Observer is pinned to a task arena and is responsible for pinning
   // joining threads to the corresponding numa node.
-  explicit ThreadPinningObserver(tbb::task_arena& arena,
+  explicit ThreadPinningObserver(tbb_kahypar::task_arena& arena,
                                  const int numa_node,
                                  const std::vector<int>& cpus) :
     Base(arena),
@@ -124,7 +124,7 @@ class ThreadPinningObserver : public tbb::task_scheduler_observer {
   ThreadPinningObserver & operator= (ThreadPinningObserver &&) = delete;
 
   void on_scheduler_entry(bool) override {
-    const int slot = tbb::this_task_arena::current_thread_index();
+    const int slot = tbb_kahypar::this_task_arena::current_thread_index();
     ASSERT(static_cast<size_t>(slot) < _cpus.size(), V(slot) << V(_cpus.size()));
 
     if ( slot >= static_cast<int>(_cpus.size()) ) {

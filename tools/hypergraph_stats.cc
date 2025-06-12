@@ -31,9 +31,9 @@
 #include <sstream>
 #include <string>
 
-#include "tbb/parallel_sort.h"
-#include "tbb/enumerable_thread_specific.h"
-#include "tbb/parallel_reduce.h"
+#include "tbb_kahypar/parallel_sort.h"
+#include "tbb_kahypar/enumerable_thread_specific.h"
+#include "tbb_kahypar/parallel_reduce.h"
 
 #include "mt-kahypar/macros.h"
 #include "mt-kahypar/datastructures/static_hypergraph.h"
@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
   std::vector<HyperedgeID> hn_degrees;
   std::vector<HypernodeWeight> hn_weights;
 
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     he_sizes.resize(hg.initialNumEdges());
   }, [&] {
     he_weights.resize(hg.initialNumEdges());
@@ -137,7 +137,7 @@ int main(int argc, char* argv[]) {
 
   HyperedgeID num_hyperedges = hg.initialNumEdges();
   const double avg_he_size = utils::avgHyperedgeDegree(hg);
-  tbb::enumerable_thread_specific<size_t> single_pin_hes(0);
+  tbb_kahypar::enumerable_thread_specific<size_t> single_pin_hes(0);
   hg.doParallelForAllEdges([&](const HyperedgeID& he) {
     he_sizes[he] = hg.edgeSize(he);
     he_weights[he] = hg.edgeWeight(he);
@@ -149,7 +149,7 @@ int main(int argc, char* argv[]) {
   const double stdev_he_size = utils::parallel_stdev(he_sizes, avg_he_size, num_hyperedges);
   const double stdev_he_weight = utils::parallel_stdev(he_weights, avg_he_weight, num_hyperedges);
 
-  tbb::enumerable_thread_specific<size_t> graph_edge_count(0);
+  tbb_kahypar::enumerable_thread_specific<size_t> graph_edge_count(0);
   hg.doParallelForAllEdges([&](const HyperedgeID& he) {
     if (hg.edgeSize(he) == 2) {
       graph_edge_count.local() += 1;
@@ -157,18 +157,18 @@ int main(int argc, char* argv[]) {
   });
 
   HyperedgeWeight total_he_weight = 0;
-  tbb::parallel_invoke([&] {
-    tbb::parallel_sort(he_sizes.begin(), he_sizes.end());
+  tbb_kahypar::parallel_invoke([&] {
+    tbb_kahypar::parallel_sort(he_sizes.begin(), he_sizes.end());
   }, [&] {
-    tbb::parallel_sort(he_weights.begin(), he_weights.end());
+    tbb_kahypar::parallel_sort(he_weights.begin(), he_weights.end());
   }, [&] {
-    tbb::parallel_sort(hn_degrees.begin(), hn_degrees.end());
+    tbb_kahypar::parallel_sort(hn_degrees.begin(), hn_degrees.end());
   }, [&] {
-    tbb::parallel_sort(hn_weights.begin(), hn_weights.end());
+    tbb_kahypar::parallel_sort(hn_weights.begin(), hn_weights.end());
   }, [&] {
-    total_he_weight = tbb::parallel_reduce(
-      tbb::blocked_range<size_t>(0, he_weights.size()), 0,
-      [&](tbb::blocked_range<size_t> r, HyperedgeWeight running_total) {
+    total_he_weight = tbb_kahypar::parallel_reduce(
+      tbb_kahypar::blocked_range<size_t>(0, he_weights.size()), 0,
+      [&](tbb_kahypar::blocked_range<size_t> r, HyperedgeWeight running_total) {
           for (size_t i = r.begin(); i < r.end(); ++i) {
               running_total += he_weights[i];
           }

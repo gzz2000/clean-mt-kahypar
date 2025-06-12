@@ -76,7 +76,7 @@ struct ObjectiveFunction<PartitionedHypergraph, Objective::steiner_tree> {
 template<Objective objective, typename PartitionedHypergraph>
 HyperedgeWeight compute_objective_parallel(const PartitionedHypergraph& phg) {
   ObjectiveFunction<PartitionedHypergraph, objective> func;
-  tbb::enumerable_thread_specific<HyperedgeWeight> obj(0);
+  tbb_kahypar::enumerable_thread_specific<HyperedgeWeight> obj(0);
   phg.doParallelForAllEdges([&](const HyperedgeID he) {
     obj.local() += func(phg, he);
   });
@@ -179,7 +179,7 @@ double imbalance(const PartitionedHypergraph& hypergraph, const Context& context
 template<typename PartitionedHypergraph>
 double approximationFactorForProcessMapping(const PartitionedHypergraph& hypergraph, const Context& context) {
   if ( !PartitionedHypergraph::is_graph ) {
-    tbb::enumerable_thread_specific<HyperedgeWeight> approx_factor(0);
+    tbb_kahypar::enumerable_thread_specific<HyperedgeWeight> approx_factor(0);
     hypergraph.doParallelForAllEdges([&](const HyperedgeID& he) {
       const size_t connectivity = hypergraph.connectivity(he);
       approx_factor.local() += connectivity <= context.mapping.max_steiner_tree_size ? 1 : 2;

@@ -31,9 +31,9 @@
 #include <memory>
 #include <iterator>
 
-#include <tbb/parallel_for.h>
-#include <tbb/scalable_allocator.h>
-#include <tbb/parallel_invoke.h>
+#include <tbb_kahypar/parallel_for.h>
+#include <tbb_kahypar/scalable_allocator.h>
+#include <tbb_kahypar/parallel_invoke.h>
 
 #include "mt-kahypar/macros.h"
 #include "mt-kahypar/parallel/memory_pool.h"
@@ -352,7 +352,7 @@ class Array {
       ASSERT(count <= _size);
       if ( assign_parallel ) {
         const size_t step = std::max(count / std::thread::hardware_concurrency(), UL(1));
-        tbb::parallel_for(UL(0), count, step, [&](const size_type i) {
+        tbb_kahypar::parallel_for(UL(0), count, step, [&](const size_type i) {
           for ( size_t j = i; j < std::min(i + step, count); ++j ) {
             _underlying_data[j] = value;
           }
@@ -397,7 +397,7 @@ namespace parallel {
           typename T2>
   MT_KAHYPAR_ATTRIBUTE_ALWAYS_INLINE static void parallel_free(ds::Array<T1>& vec1,
                                                                ds::Array<T2>& vec2) {
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       free(vec1);
     }, [&] {
       free(vec2);
@@ -410,7 +410,7 @@ namespace parallel {
   MT_KAHYPAR_ATTRIBUTE_ALWAYS_INLINE static void parallel_free(ds::Array<T1>& vec1,
                                                                ds::Array<T2>& vec2,
                                                                ds::Array<T3>& vec3) {
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       free(vec1);
     }, [&] {
       free(vec2);
@@ -427,7 +427,7 @@ namespace parallel {
                                                                ds::Array<T2>& vec2,
                                                                ds::Array<T3>& vec3,
                                                                ds::Array<T4>& vec4) {
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       free(vec1);
     }, [&] {
       free(vec2);
@@ -449,7 +449,7 @@ namespace parallel {
                                                                ds::Array<T3>& vec3,
                                                                ds::Array<T4>& vec4,
                                                                ds::Array<T5>& vec5) {
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       free(vec1);
     }, [&] {
       free(vec2);
@@ -474,7 +474,7 @@ namespace parallel {
                                                                ds::Array<T4>& vec4,
                                                                ds::Array<T5>& vec5,
                                                                ds::Array<T6>& vec6) {
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       free(vec1);
     }, [&] {
       free(vec2);

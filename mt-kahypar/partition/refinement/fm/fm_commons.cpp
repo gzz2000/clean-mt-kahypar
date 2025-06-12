@@ -88,8 +88,8 @@ namespace mt_kahypar {
     };
 
     const double bn_treshold = context.refinement.fm.treshold_border_node_inclusion;
-    tbb::enumerable_thread_specific<HypernodeWeight> local_considered_weight(0);
-    tbb::enumerable_thread_specific<HypernodeWeight> local_inserted_weight(0);
+    tbb_kahypar::enumerable_thread_specific<HypernodeWeight> local_considered_weight(0);
+    tbb_kahypar::enumerable_thread_specific<HypernodeWeight> local_inserted_weight(0);
     // collect nodes and fill buckets
     phg.doParallelForAllNodes([&](const HypernodeID hn) {
       const HypernodeWeight hn_weight = phg.nodeWeight(hn);
@@ -122,9 +122,9 @@ namespace mt_kahypar {
         bucket_weights[i + 1] += bucket_weights[i];
       }
     };
-    tbb::parallel_for(static_cast<PartitionID>(0), context.partition.k, [&](const PartitionID block) {
+    tbb_kahypar::parallel_for(static_cast<PartitionID>(0), context.partition.k, [&](const PartitionID block) {
       compute_prefix_sum_for_range(block * NUM_BUCKETS, (block + 1) * NUM_BUCKETS);
-    }, tbb::static_partitioner());
+    }, tbb_kahypar::static_partitioner());
 
     const HypernodeWeight considered_weight = local_considered_weight.combine(std::plus<>());
     const HypernodeWeight inserted_weight = local_inserted_weight.combine(std::plus<>());
@@ -136,7 +136,7 @@ namespace mt_kahypar {
       using SparseMap = ds::DynamicSparseMap<uint64_t, HypernodeWeight>;
 
       // collect nodes into local hashmaps
-      tbb::enumerable_thread_specific<SparseMap> local_accumulator;
+      tbb_kahypar::enumerable_thread_specific<SparseMap> local_accumulator;
       phg.doParallelForAllNodes([&](const HypernodeID hn) {
         const HypernodeWeight hn_weight = phg.nodeWeight(hn);
         if (hn_weight == 0) return;
@@ -194,7 +194,7 @@ namespace mt_kahypar {
 
       auto& fallback_bucket_weights = data.fallback_bucket_weights;
       // resize vectors accordingly, set rank to zero if no fallback is required for this block
-      tbb::parallel_for(static_cast<PartitionID>(0), context.partition.k, [&](const PartitionID block) {
+      tbb_kahypar::parallel_for(static_cast<PartitionID>(0), context.partition.k, [&](const PartitionID block) {
         const HypernodeWeight handled_weight = bucket_weights[data.indexForBucket(block, NUM_BUCKETS - 1)];
         const HypernodeWeight fallback_weight = weight_per_block[block];
         if (static_cast<double>(handled_weight) / (handled_weight + fallback_weight) >= FALLBACK_TRESHOLD) {
@@ -202,7 +202,7 @@ namespace mt_kahypar {
         } else {
           fallback_bucket_weights[block].resize(max_rank_per_block[block] + 1, 0);
         }
-      }, tbb::static_partitioner());
+      }, tbb_kahypar::static_partitioner());
 
       // accumulate results in fallback_bucket_weights
       local_accumulator.combine_each([&](SparseMap& map) {
@@ -224,7 +224,7 @@ namespace mt_kahypar {
       });
 
       // compute prefix sums
-      tbb::parallel_for(static_cast<PartitionID>(0), context.partition.k, [&](const PartitionID block) {
+      tbb_kahypar::parallel_for(static_cast<PartitionID>(0), context.partition.k, [&](const PartitionID block) {
         auto& weights = fallback_bucket_weights[block];
         if (!weights.empty()) {
           weights[0] += bucket_weights[data.indexForBucket(block, NUM_BUCKETS - 1)];
@@ -232,7 +232,7 @@ namespace mt_kahypar {
             weights[i + 1] += weights[i];
           }
         }
-      }, tbb::static_partitioner());
+      }, tbb_kahypar::static_partitioner());
     }
 
     data.initialized = true;

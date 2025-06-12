@@ -32,7 +32,7 @@
 #include <stack>
 #include <vector>
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "kahypar-resources/datastructure/fast_reset_flag_array.h"
 #include "kahypar-resources/meta/mandatory.h"
@@ -49,10 +49,10 @@ template <typename ScorePolicy = Mandatory,
 class MultilevelVertexPairRater {
   using LargeTmpRatingMap = ds::SparseMap<HypernodeID, RatingType>;
   using CacheEfficientRatingMap = ds::FixedSizeSparseMap<HypernodeID, RatingType>;
-  using ThreadLocalCacheEfficientRatingMap = tbb::enumerable_thread_specific<CacheEfficientRatingMap>;
-  using ThreadLocalVertexDegreeBoundedRatingMap = tbb::enumerable_thread_specific<CacheEfficientRatingMap>;
-  using ThreadLocalLargeTmpRatingMap = tbb::enumerable_thread_specific<LargeTmpRatingMap>;
-  using ThreadLocalFastResetFlagArray = tbb::enumerable_thread_specific<kahypar::ds::FastResetFlagArray<> >;
+  using ThreadLocalCacheEfficientRatingMap = tbb_kahypar::enumerable_thread_specific<CacheEfficientRatingMap>;
+  using ThreadLocalVertexDegreeBoundedRatingMap = tbb_kahypar::enumerable_thread_specific<CacheEfficientRatingMap>;
+  using ThreadLocalLargeTmpRatingMap = tbb_kahypar::enumerable_thread_specific<LargeTmpRatingMap>;
+  using ThreadLocalFastResetFlagArray = tbb_kahypar::enumerable_thread_specific<kahypar::ds::FastResetFlagArray<> >;
 
  private:
   static constexpr bool debug = false;

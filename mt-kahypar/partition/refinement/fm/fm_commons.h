@@ -35,8 +35,8 @@
 
 #include "kahypar-resources/datastructure/fast_reset_flag_array.h"
 
-#include <tbb/enumerable_thread_specific.h>
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
+#include <tbb_kahypar/parallel_for.h>
 
 namespace mt_kahypar {
 
@@ -55,7 +55,7 @@ struct GlobalMoveTracker {
   // Returns true if stored move IDs should be reset
   bool reset() {
     if (runningMoveID.load() >= std::numeric_limits<MoveID>::max() - moveOrder.size() - 20) {
-      tbb::parallel_for(UL(0), moveOfNode.size(), [&](size_t i) { moveOfNode[i] = 0; }, tbb::static_partitioner());
+      tbb_kahypar::parallel_for(UL(0), moveOfNode.size(), [&](size_t i) { moveOfNode[i] = 0; }, tbb_kahypar::static_partitioner());
       firstMoveID = 1;
       runningMoveID.store(1);
       return true;
@@ -136,7 +136,7 @@ struct NodeTracker {
 
   void requestNewSearches(SearchID max_num_searches) {
     if (highestActiveSearchID.load(std::memory_order_relaxed) >= std::numeric_limits<SearchID>::max() - max_num_searches - 20) {
-      tbb::parallel_for(UL(0), searchOfNode.size(), [&](const size_t i) {
+      tbb_kahypar::parallel_for(UL(0), searchOfNode.size(), [&](const size_t i) {
         searchOfNode[i].store(0, std::memory_order_relaxed);
       });
       highestActiveSearchID.store(1, std::memory_order_relaxed);
@@ -202,7 +202,7 @@ class UnconstrainedFMData {
   void changeNumberOfBlocks(PartitionID new_k) {
     if (new_k != current_k) {
       current_k = new_k;
-      local_bucket_weights = tbb::enumerable_thread_specific<vec<HypernodeWeight>>(new_k * NUM_BUCKETS);
+      local_bucket_weights = tbb_kahypar::enumerable_thread_specific<vec<HypernodeWeight>>(new_k * NUM_BUCKETS);
       initialized = false;
     }
   }
@@ -243,7 +243,7 @@ class UnconstrainedFMData {
   PartitionID current_k;
   parallel::scalable_vector<HypernodeWeight> bucket_weights;
   parallel::scalable_vector<AtomicWeight> virtual_weight_delta;
-  tbb::enumerable_thread_specific<parallel::scalable_vector<HypernodeWeight>> local_bucket_weights;
+  tbb_kahypar::enumerable_thread_specific<parallel::scalable_vector<HypernodeWeight>> local_bucket_weights;
   parallel::scalable_vector<parallel::scalable_vector<HypernodeWeight>> fallback_bucket_weights;
   kahypar::ds::FastResetFlagArray<> rebalancing_nodes;
 };
@@ -287,7 +287,7 @@ struct FMSharedData {
     unconstrained(numNodes) {
     finishedTasks.store(0, std::memory_order_relaxed);
 
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       moveTracker.moveOrder.resize(numNodes);
     }, [&] {
       moveTracker.moveOfNode.resize(numNodes);

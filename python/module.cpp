@@ -31,7 +31,7 @@
 
 #include <boost_kahypar/range/irange.hpp>
 
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/parallel_for.h>
 
 #include <atomic>
 #include <string>

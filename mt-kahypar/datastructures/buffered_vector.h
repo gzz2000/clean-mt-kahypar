@@ -30,15 +30,15 @@
 #include <vector>
 #include <cassert>
 
-#include <tbb/scalable_allocator.h>
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/scalable_allocator.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 namespace mt_kahypar::ds {
 
 template<typename T>
 class BufferedVector {
 public:
-  using vec_t = std::vector<T, tbb::scalable_allocator<T>>;
+  using vec_t = std::vector<T, tbb_kahypar::scalable_allocator<T>>;
 
   BufferedVector(size_t max_size) :
     data(max_size, T()),
@@ -113,7 +113,7 @@ private:
 
   vec_t data;
   std::atomic<size_t> back{0};
-  tbb::enumerable_thread_specific<vec_t> buffers;
+  tbb_kahypar::enumerable_thread_specific<vec_t> buffers;
   static constexpr size_t MAX_BUFFER_SIZE = 1024;
 };
 }

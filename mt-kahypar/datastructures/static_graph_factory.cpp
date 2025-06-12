@@ -28,8 +28,8 @@
 
 #include "static_graph_factory.h"
 
-#include <tbb/parallel_for.h>
-#include <tbb/parallel_invoke.h>
+#include <tbb_kahypar/parallel_for.h>
+#include <tbb_kahypar/parallel_invoke.h>
 
 #include "mt-kahypar/parallel/parallel_prefix_sum.h"
 #include "mt-kahypar/parallel/stl/scalable_vector.h"
@@ -42,7 +42,7 @@ namespace mt_kahypar::ds {
     edge_ids_of_node.resize(graph._edges.size());
     // sort incident edges of each node, so their ordering is independent of scheduling
     // (and the same as a typical sequential implementation)
-    tbb::parallel_for(ID(0), graph._num_nodes, [&](HypernodeID u) {
+    tbb_kahypar::parallel_for(ID(0), graph._num_nodes, [&](HypernodeID u) {
       const HyperedgeID start = graph.node(u).firstEntry();
       const HyperedgeID end = graph.node(u + 1).firstEntry();
       for (HyperedgeID id = 0; id < end - start; ++id) {
@@ -76,7 +76,7 @@ namespace mt_kahypar::ds {
 
     EdgeVector edges;
     edges.resize(num_edges);
-    tbb::parallel_for(UL(0), edge_vector.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), edge_vector.size(), [&](const size_t i) {
       const auto& e = edge_vector[i];
       if (e.size() != 2) {
         throw InvalidInputException(
@@ -106,7 +106,7 @@ namespace mt_kahypar::ds {
 
     // Compute degree for each vertex
     ThreadLocalCounter local_degree_per_vertex(num_nodes);
-    tbb::parallel_for(ID(0), num_edges, [&](const size_t pos) {
+    tbb_kahypar::parallel_for(ID(0), num_edges, [&](const size_t pos) {
       Counter& num_degree_per_vertex = local_degree_per_vertex.local();
       const HypernodeID pins[2] = {edge_vector[pos].first, edge_vector[pos].second};
       for (const HypernodeID& pin : pins) {
@@ -119,7 +119,7 @@ namespace mt_kahypar::ds {
     // global degree, we iterate over each thread local counter and sum it up.
     Counter num_degree_per_vertex(num_nodes, 0);
     for (Counter& c : local_degree_per_vertex) {
-      tbb::parallel_for(ID(0), num_nodes, [&](const size_t pos) {
+      tbb_kahypar::parallel_for(ID(0), num_nodes, [&](const size_t pos) {
         num_degree_per_vertex[pos] += c[pos];
       });
     }
@@ -127,7 +127,7 @@ namespace mt_kahypar::ds {
     // Compute prefix sum over the degrees. The prefix sum is used than
     // as start position for each node in the edge array.
     parallel::TBBPrefixSum<size_t> degree_prefix_sum(num_degree_per_vertex);
-    tbb::parallel_scan(tbb::blocked_range<size_t>( UL(0), UI64(num_nodes)), degree_prefix_sum);
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>( UL(0), UI64(num_nodes)), degree_prefix_sum);
 
     ASSERT(degree_prefix_sum.total_sum() == 2 * num_edges);
 
@@ -135,7 +135,7 @@ namespace mt_kahypar::ds {
                                          parallel::IntegralAtomicWrapper<size_t>(0));
 
     auto setup_edges = [&] {
-      tbb::parallel_for(ID(0), num_edges, [&](const size_t pos) {
+      tbb_kahypar::parallel_for(ID(0), num_edges, [&](const size_t pos) {
         const HypernodeID pin0 = edge_vector[pos].first;
         const HyperedgeID incident_edges_pos0 = degree_prefix_sum[pin0] + incident_edges_position[pin0]++;
         ASSERT(incident_edges_pos0 < graph._edges.size());
@@ -161,7 +161,7 @@ namespace mt_kahypar::ds {
     };
 
     auto setup_nodes = [&] {
-      tbb::parallel_for(ID(0), num_nodes, [&](const size_t pos) {
+      tbb_kahypar::parallel_for(ID(0), num_nodes, [&](const size_t pos) {
         StaticGraph::Node& node = graph._nodes[pos];
         node.enable();
         node.setFirstEntry(degree_prefix_sum[pos]);
@@ -175,7 +175,7 @@ namespace mt_kahypar::ds {
       graph._community_ids.resize(num_nodes, 0);
     };
 
-    tbb::parallel_invoke(setup_edges, setup_nodes, init_communities);
+    tbb_kahypar::parallel_invoke(setup_edges, setup_nodes, init_communities);
 
     // Add Sentinel
     graph._nodes.back() = StaticGraph::Node(graph._edges.size());

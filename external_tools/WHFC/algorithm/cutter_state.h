@@ -14,14 +14,14 @@
 #include "../util/math.h"
 #include "../util/random.h"
 
-#include <tbb/blocked_range.h>
-#include <tbb/parallel_invoke.h>
-#include <tbb/parallel_reduce.h>
-#include <tbb/scalable_allocator.h>
+#include <tbb_kahypar/blocked_range.h>
+#include <tbb_kahypar/parallel_invoke.h>
+#include <tbb_kahypar/parallel_reduce.h>
+#include <tbb_kahypar/scalable_allocator.h>
 
 namespace whfc {
     template<typename T>
-    using vec = std::vector<T, tbb::scalable_allocator<T>>;
+    using vec = std::vector<T, tbb_kahypar::scalable_allocator<T>>;
 
     struct SimulatedNodeAssignment {
         bool assign_unclaimed_to_source = true;
@@ -137,7 +137,7 @@ namespace whfc {
 
         void computeReachableWeights() {
             if (augmenting_path_available_from_piercing) {
-                // tbb::parallel_invoke([&] {
+                // tbb_kahypar::parallel_invoke([&] {
                 computeSourceReachableWeight();
                 //	}, [&] {
                 computeTargetReachableWeight();
@@ -157,8 +157,8 @@ namespace whfc {
             auto sr = flow_algo.sourceReachableNodes();
             source_reachable_weight = source_weight;
             if (augmenting_path_available_from_piercing && sr.size() > 5000 && !force_sequential) {
-                source_reachable_weight += tbb::parallel_reduce(
-                        tbb::blocked_range<size_t>(0, sr.size(), 2000), 0,
+                source_reachable_weight += tbb_kahypar::parallel_reduce(
+                        tbb_kahypar::blocked_range<size_t>(0, sr.size(), 2000), 0,
                         [&](const auto& r, NodeWeight sum) -> NodeWeight {
                             for (size_t i = r.begin(); i < r.end(); ++i) {
                                 Node u = sr[i];
@@ -195,8 +195,8 @@ namespace whfc {
             auto tr = flow_algo.targetReachableNodes();
             target_reachable_weight = target_weight;
             if (augmenting_path_available_from_piercing && tr.size() > 5000 && !force_sequential) {
-                target_reachable_weight += tbb::parallel_reduce(
-                        tbb::blocked_range<size_t>(0, tr.size(), 2000), 0,
+                target_reachable_weight += tbb_kahypar::parallel_reduce(
+                        tbb_kahypar::blocked_range<size_t>(0, tr.size(), 2000), 0,
                         [&](const auto& r, NodeWeight sum) -> NodeWeight {
                             for (size_t i = r.begin(); i < r.end(); ++i) {
                                 Node u = tr[i];

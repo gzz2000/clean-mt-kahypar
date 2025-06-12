@@ -28,7 +28,7 @@
 
 #include <vector>
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/partition/refinement/gains/gain_computation_base.h"
 #include "mt-kahypar/partition/refinement/gains/steiner_tree_for_graphs/steiner_tree_attributed_gains_for_graphs.h"
@@ -147,11 +147,11 @@ class GraphSteinerTreeGainComputation : public GainComputationBase<GraphSteinerT
 
   // ! Before gain computation, we construct a bitset that contains all
   // ! adjacent nodes of a block
-  tbb::enumerable_thread_specific<ds::Bitset> _local_adjacent_blocks;
+  tbb_kahypar::enumerable_thread_specific<ds::Bitset> _local_adjacent_blocks;
   ds::Bitset _all_blocks;
 
   // ! Array for precomputing the weight of all edges connecting a node to a particular block
-  tbb::enumerable_thread_specific<vec<HyperedgeWeight>> _ets_incident_edge_weights;
+  tbb_kahypar::enumerable_thread_specific<vec<HyperedgeWeight>> _ets_incident_edge_weights;
 };
 
 }  // namespace mt_kahypar

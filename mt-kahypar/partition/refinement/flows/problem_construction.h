@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/partition/context.h"
 #include "mt-kahypar/datastructures/sparse_map.h"
@@ -150,7 +150,7 @@ class ProblemConstruction {
   HyperedgeID _num_hyperedges;
 
   // ! Contains data required for BFS construction algorithm
-  tbb::enumerable_thread_specific<BFSData> _local_bfs;
+  tbb_kahypar::enumerable_thread_specific<BFSData> _local_bfs;
 };
 
 }  // namespace kahypar

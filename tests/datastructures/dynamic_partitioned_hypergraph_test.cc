@@ -132,7 +132,7 @@ class APartitionedHypergraph : public Test {
 template <class F1, class F2>
 void executeConcurrent(const F1& f1, const F2& f2) {
   std::atomic<int> cnt(0);
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     cnt++;
     while (cnt < 2) { }
     f1();

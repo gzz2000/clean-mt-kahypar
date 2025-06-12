@@ -29,7 +29,7 @@
 
 #include <cstddef>
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "kahypar-resources/datastructure/fast_reset_flag_array.h"
 
@@ -129,7 +129,7 @@ class EdgeIterator {
 class DynamicAdjacencyArray {
   using HyperedgeVector = parallel::scalable_vector<parallel::scalable_vector<HypernodeID>>;
   using EdgeVector = parallel::scalable_vector<std::pair<HypernodeID, HypernodeID>>;
-  using ThreadLocalCounter = tbb::enumerable_thread_specific<parallel::scalable_vector<size_t>>;
+  using ThreadLocalCounter = tbb_kahypar::enumerable_thread_specific<parallel::scalable_vector<size_t>>;
   using AtomicCounter = parallel::scalable_vector<parallel::IntegralAtomicWrapper<size_t>>;
 
   using AcquireLockFunc = std::function<void (const HypernodeID)>;
@@ -254,7 +254,7 @@ class DynamicAdjacencyArray {
     HyperedgeID unique_id;
   };
 
-  using ThreadLocalParallelEdgeVector = tbb::enumerable_thread_specific<vec<ParallelEdgeInformation>>;
+  using ThreadLocalParallelEdgeVector = tbb_kahypar::enumerable_thread_specific<vec<ParallelEdgeInformation>>;
 
  public:
   using const_iterator = IncidentEdgeIterator;
@@ -331,7 +331,7 @@ class DynamicAdjacencyArray {
   // ! for each net
   template<typename F>
   void doParallelForAllEdges(const F& f) const {
-    tbb::parallel_for(ID(0), _num_nodes, [&](const HypernodeID& head) {
+    tbb_kahypar::parallel_for(ID(0), _num_nodes, [&](const HypernodeID& head) {
       const HyperedgeID last = firstInactiveEdge(head);
       for (HyperedgeID e = firstActiveEdge(head); e < last; ++e) {
         if (edge(e).isValid()) {
@@ -485,7 +485,7 @@ class DynamicAdjacencyArray {
 
   void initializeEdgeMapping(Array<HyperedgeID>& mapping) {
     ASSERT(mapping.size() == _edges.size());
-    tbb::parallel_for(ID(0), ID(mapping.size()), [&](const HyperedgeID e) {
+    tbb_kahypar::parallel_for(ID(0), ID(mapping.size()), [&](const HyperedgeID e) {
       mapping[e] = e;
     });
   }
@@ -493,7 +493,7 @@ class DynamicAdjacencyArray {
   // ! Updates all backedges using the provided mapping
   void applyEdgeMapping(Array<HyperedgeID>& mapping) {
     ASSERT(mapping.size() == _edges.size());
-    tbb::parallel_for(ID(0), ID(mapping.size()), [&](const HyperedgeID e) {
+    tbb_kahypar::parallel_for(ID(0), ID(mapping.size()), [&](const HyperedgeID e) {
       edge(e).back_edge = mapping[edge(e).back_edge];
     });
   }

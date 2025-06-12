@@ -28,7 +28,7 @@
 
 #include <thread>
 
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/parallel/work_stack.h"
 
@@ -43,19 +43,19 @@ size_t n = 100000;
 TEST(WorkContainer, HasCorrectSizeAfterParallelInsertionAndDeletion) {
   int m = 75000;
   WorkContainer<int> cdc(std::thread::hardware_concurrency());
-  tbb::parallel_for(0, m, [&](int i) {
-    cdc.safe_push(i, tbb::this_task_arena::current_thread_index());
+  tbb_kahypar::parallel_for(0, m, [&](int i) {
+    cdc.safe_push(i, tbb_kahypar::this_task_arena::current_thread_index());
   });
   ASSERT_EQ(cdc.unsafe_size(), m);
 
-  tbb::enumerable_thread_specific<int> counters;
-  tbb::task_group tg;
+  tbb_kahypar::enumerable_thread_specific<int> counters;
+  tbb_kahypar::task_group tg;
   int num_tasks = 7;
   for (int i = 0; i < num_tasks; ++i) {
     tg.run([&]() {
       int res = 0;
       int& lc = counters.local();
-      while (cdc.try_pop(res, tbb::this_task_arena::current_thread_index())) {
+      while (cdc.try_pop(res, tbb_kahypar::this_task_arena::current_thread_index())) {
         lc++;
       }
     });
@@ -71,8 +71,8 @@ TEST(WorkContainer, HasCorrectSizeAfterParallelInsertionAndDeletion) {
 
 TEST(WorkContainer, ClearWorks) {
   WorkContainer<int> cdc(std::thread::hardware_concurrency());
-  cdc.safe_push(5, tbb::this_task_arena::current_thread_index());
-  cdc.safe_push(420, tbb::this_task_arena::current_thread_index());
+  cdc.safe_push(5, tbb_kahypar::this_task_arena::current_thread_index());
+  cdc.safe_push(420, tbb_kahypar::this_task_arena::current_thread_index());
   ASSERT_EQ(cdc.unsafe_size(), 2);
   cdc.clear();
   ASSERT_TRUE(cdc.unsafe_size() == 0);

@@ -26,7 +26,7 @@
 
 #include "gmock/gmock.h"
 
-#include <tbb/task_group.h>
+#include <tbb_kahypar/task_group.h>
 
 #include "mt-kahypar/datastructures/static_graph_factory.h"
 #include "mt-kahypar/partition/mapping/target_graph.h"
@@ -126,7 +126,7 @@ class ATargetGraph : public Test {
 template <class F, class K>
 void executeConcurrent(F f1, K f2) {
   std::atomic<int> cnt(0);
-  tbb::task_group group;
+  tbb_kahypar::task_group group;
 
   group.run([&] {
         cnt++;

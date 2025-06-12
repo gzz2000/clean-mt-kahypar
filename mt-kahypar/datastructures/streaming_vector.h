@@ -31,8 +31,8 @@
 #include <thread>
 #include <type_traits>
 
-#include <tbb/task_arena.h>
-#include <tbb/task_group.h>
+#include <tbb_kahypar/task_arena.h>
+#include <tbb_kahypar/task_group.h>
 
 #include "kahypar-resources/meta/mandatory.h"
 
@@ -94,7 +94,7 @@ class StreamingVector {
     }
     values.resize(total_size);
 
-    tbb::parallel_for(0, static_cast<int>(_cpu_buffer.size()), [&](const int cpu_id) {
+    tbb_kahypar::parallel_for(0, static_cast<int>(_cpu_buffer.size()), [&](const int cpu_id) {
       memcpy_from_cpu_buffer_to_destination(values, cpu_id, _prefix_sum[cpu_id]);
     });
     return values;
@@ -108,7 +108,7 @@ class StreamingVector {
       values.resize(size);
     }
 
-    tbb::parallel_for(0, static_cast<int>(_cpu_buffer.size()), [&](const int cpu_id) {
+    tbb_kahypar::parallel_for(0, static_cast<int>(_cpu_buffer.size()), [&](const int cpu_id) {
       memcpy_from_cpu_buffer_to_destination(values, cpu_id, _prefix_sum[cpu_id]);
     });
     return size;
@@ -150,7 +150,7 @@ class StreamingVector {
   }
 
   void clear_parallel() {
-    tbb::parallel_for(0, static_cast<int>(_cpu_buffer.size()), [&](const int cpu_id) {
+    tbb_kahypar::parallel_for(0, static_cast<int>(_cpu_buffer.size()), [&](const int cpu_id) {
       parallel::scalable_vector<Value> tmp_value;
       _cpu_buffer[cpu_id] = std::move(tmp_value);
     });

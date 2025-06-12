@@ -36,9 +36,9 @@
 #include <shared_mutex>
 #include <functional>
 
-#include <tbb/task_arena.h>
-#include <tbb/task_group.h>
-#include <tbb/global_control.h>
+#include <tbb_kahypar/task_arena.h>
+#include <tbb_kahypar/task_group.h>
+#include <tbb_kahypar/global_control.h>
 
 #include "mt-kahypar/macros.h"
 #include "mt-kahypar/parallel/thread_pinning_observer.h"
@@ -106,7 +106,7 @@ class TBBInitializer {
  private:
   explicit TBBInitializer(const int num_threads) :
     _num_threads(num_threads),
-    _gc(tbb::global_control::max_allowed_parallelism, num_threads),
+    _gc(tbb_kahypar::global_control::max_allowed_parallelism, num_threads),
     _global_observer(nullptr),
     _cpus(),
     _numa_node_to_cpu_id() {
@@ -147,7 +147,7 @@ class TBBInitializer {
   }
 
   int _num_threads;
-  tbb::global_control _gc;
+  tbb_kahypar::global_control _gc;
   std::unique_ptr<ThreadPinningObserver> _global_observer;
   std::vector<int> _cpus;
   std::vector<std::vector<int>> _numa_node_to_cpu_id;
@@ -184,10 +184,10 @@ class SimpleTBBInitializer {
  private:
   explicit SimpleTBBInitializer(const int num_threads) :
     _num_threads(num_threads),
-    _gc(tbb::global_control::max_allowed_parallelism, num_threads) { }
+    _gc(tbb_kahypar::global_control::max_allowed_parallelism, num_threads) { }
 
   int _num_threads;
-  tbb::global_control _gc;
+  tbb_kahypar::global_control _gc;
 };
 #endif
 

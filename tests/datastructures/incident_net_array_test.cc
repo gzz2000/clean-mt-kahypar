@@ -250,7 +250,7 @@ using OwnershipVector = parallel::scalable_vector<SpinLock>;
 template<typename F, typename K>
 void executeParallel(const F& f1, const K& f2) {
   std::atomic<size_t> cnt(0);
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     ++cnt;
     while ( cnt < 2 ) { }
     f1();

@@ -28,10 +28,10 @@
 #include "graph.h"
 
 
-#include <tbb/parallel_for.h>
-#include <tbb/parallel_reduce.h>
-#include <tbb/parallel_invoke.h>
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/parallel_for.h>
+#include <tbb_kahypar/parallel_reduce.h>
+#include <tbb_kahypar/parallel_invoke.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/parallel/parallel_prefix_sum.h"
@@ -133,11 +133,11 @@ namespace mt_kahypar::ds {
   Graph<Hypergraph> Graph<Hypergraph>::contract_low_memory(Clustering& communities) {
     // map cluster IDs to consecutive range
     vec<NodeID> mapping(numNodes(), 0);   // TODO use memory pool?
-    tbb::parallel_for(UL(0), numNodes(), [&](NodeID u) { mapping[communities[u]] = 1; });
+    tbb_kahypar::parallel_for(UL(0), numNodes(), [&](NodeID u) { mapping[communities[u]] = 1; });
     parallel_prefix_sum(mapping.begin(), mapping.begin() + numNodes(), mapping.begin(), std::plus<>(), 0);
     NodeID num_coarse_nodes = mapping[numNodes() - 1];
     // apply mapping to cluster IDs. subtract one because prefix sum is inclusive
-    tbb::parallel_for(UL(0), numNodes(), [&](NodeID u) { communities[u] = mapping[communities[u]] - 1; });
+    tbb_kahypar::parallel_for(UL(0), numNodes(), [&](NodeID u) { communities[u] = mapping[communities[u]] - 1; });
 
     // sort nodes by cluster
     auto get_cluster = [&](NodeID u) { assert(u < communities.size()); return communities[u]; };
@@ -157,11 +157,11 @@ namespace mt_kahypar::ds {
 
       ClearList(size_t n) : values(n, 0.0) { }
     };
-    tbb::enumerable_thread_specific<ClearList> clear_lists(num_coarse_nodes);
-    tbb::enumerable_thread_specific<size_t> local_max_degree(0);
+    tbb_kahypar::enumerable_thread_specific<ClearList> clear_lists(num_coarse_nodes);
+    tbb_kahypar::enumerable_thread_specific<size_t> local_max_degree(0);
 
     // first pass generating unique coarse arcs to determine coarse node degrees
-    tbb::parallel_for(ID(0), num_coarse_nodes, [&](NodeID cu) {
+    tbb_kahypar::parallel_for(ID(0), num_coarse_nodes, [&](NodeID cu) {
       auto& clear_list = clear_lists.local();
       ArcWeight volume_cu = 0.0;
       for (auto i = cluster_bounds[cu]; i < cluster_bounds[cu + 1]; ++i) {
@@ -192,7 +192,7 @@ namespace mt_kahypar::ds {
     coarse_graph._max_degree = local_max_degree.combine([](size_t lhs, size_t rhs) { return std::max(lhs, rhs); });
 
     // second pass generating unique coarse arcs
-    tbb::parallel_for(ID(0), num_coarse_nodes, [&](NodeID cu) {
+    tbb_kahypar::parallel_for(ID(0), num_coarse_nodes, [&](NodeID cu) {
       auto& clear_list = clear_lists.local();
       for (auto i = cluster_bounds[cu]; i < cluster_bounds[cu+1]; ++i) {
         for (const Arc& arc : arcsOf(nodes_sorted_by_cluster[i])) {
@@ -244,7 +244,7 @@ namespace mt_kahypar::ds {
     ds::Array<parallel::IntegralAtomicWrapper<size_t>>& tmp_pos = _tmp_graph_buffer->tmp_pos;
     ds::Array<parallel::IntegralAtomicWrapper<size_t>>& tmp_indices = _tmp_graph_buffer->tmp_indices;
     ds::Array<parallel::AtomicWrapper<ArcWeight>>& coarse_node_volumes = _tmp_graph_buffer->tmp_node_volumes;
-    tbb::parallel_for(ID(0), static_cast<NodeID>(_num_nodes), [&](const NodeID u) {
+    tbb_kahypar::parallel_for(ID(0), static_cast<NodeID>(_num_nodes), [&](const NodeID u) {
       ASSERT(static_cast<size_t>(communities[u]) < _num_nodes);
       mapping[communities[u]] = UL(1);
       tmp_pos[u] = 0;
@@ -254,11 +254,11 @@ namespace mt_kahypar::ds {
 
     // Prefix sum determines node ids in coarse graph
     parallel::TBBPrefixSum<size_t> mapping_prefix_sum(mapping);
-    tbb::parallel_scan(tbb::blocked_range<size_t>(UL(0), _num_nodes), mapping_prefix_sum);
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(UL(0), _num_nodes), mapping_prefix_sum);
 
     // Remap community ids
     coarse_graph._num_nodes = mapping_prefix_sum.total_sum();
-    tbb::parallel_for(ID(0), static_cast<NodeID>(_num_nodes), [&](const NodeID u) {
+    tbb_kahypar::parallel_for(ID(0), static_cast<NodeID>(_num_nodes), [&](const NodeID u) {
       communities[u] = mapping_prefix_sum[communities[u]];
     });
 
@@ -269,7 +269,7 @@ namespace mt_kahypar::ds {
     // the tmp adjacence array.
     // Compute number of arcs in tmp adjacence array with parallel prefix sum
     ASSERT(coarse_graph._num_nodes <= coarse_node_volumes.size());
-    tbb::parallel_for(ID(0), static_cast<NodeID>(_num_nodes), [&](const NodeID u) {
+    tbb_kahypar::parallel_for(ID(0), static_cast<NodeID>(_num_nodes), [&](const NodeID u) {
       const NodeID coarse_u = communities[u];
       ASSERT(static_cast<size_t>(coarse_u) < coarse_graph._num_nodes);
       coarse_node_volumes[coarse_u] += nodeVolume(u);     // not deterministic!
@@ -282,12 +282,12 @@ namespace mt_kahypar::ds {
     });
 
     parallel::TBBPrefixSum<parallel::IntegralAtomicWrapper<size_t>, ds::Array> tmp_indices_prefix_sum(tmp_indices);
-    tbb::parallel_scan(tbb::blocked_range<size_t>(UL(0), _num_nodes), tmp_indices_prefix_sum);
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(UL(0), _num_nodes), tmp_indices_prefix_sum);
 
     // Write all arcs into corresponding tmp adjacence array blocks
     ds::Array<Arc>& tmp_arcs = _tmp_graph_buffer->tmp_arcs;
     ds::Array<size_t>& valid_arcs = _tmp_graph_buffer->valid_arcs;
-    tbb::parallel_for(ID(0), static_cast<NodeID>(_num_nodes), [&](const NodeID u) {
+    tbb_kahypar::parallel_for(ID(0), static_cast<NodeID>(_num_nodes), [&](const NodeID u) {
       const NodeID coarse_u = communities[u];
       ASSERT(static_cast<size_t>(coarse_u) < coarse_graph._num_nodes);
       for ( const Arc& arc : arcsOf(u) ) {
@@ -305,8 +305,8 @@ namespace mt_kahypar::ds {
     // Aggregate weights of arcs that are equal in each community.
     // Therefore, we sort the arcs according to their endpoints
     // and aggregate weight of arcs with equal endpoints.
-    tbb::enumerable_thread_specific<size_t> local_max_degree(0);
-    tbb::parallel_for(ID(0), static_cast<NodeID>(coarse_graph._num_nodes), [&](const NodeID u) {
+    tbb_kahypar::enumerable_thread_specific<size_t> local_max_degree(0);
+    tbb_kahypar::parallel_for(ID(0), static_cast<NodeID>(coarse_graph._num_nodes), [&](const NodeID u) {
       const size_t tmp_arc_start = tmp_indices_prefix_sum[u];
       const size_t tmp_arc_end = tmp_indices_prefix_sum[u + 1];
       // commented out comparison is needed for deterministic arc weights
@@ -334,7 +334,7 @@ namespace mt_kahypar::ds {
 
     // Write all arcs to coarse graph
     parallel::TBBPrefixSum<size_t, ds::Array> valid_arcs_prefix_sum(valid_arcs);
-    tbb::parallel_scan(tbb::blocked_range<size_t>(UL(0),
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(UL(0),
                                                   tmp_indices_prefix_sum.total_sum()), valid_arcs_prefix_sum);
     coarse_graph._num_arcs = valid_arcs_prefix_sum.total_sum();
 
@@ -343,9 +343,9 @@ namespace mt_kahypar::ds {
     coarse_graph._arcs = std::move(_arcs);
     coarse_graph._node_volumes = std::move(_node_volumes);
 
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       const size_t tmp_num_arcs = tmp_indices_prefix_sum.total_sum();
-      tbb::parallel_for(UL(0), tmp_num_arcs, [&](const size_t i) {
+      tbb_kahypar::parallel_for(UL(0), tmp_num_arcs, [&](const size_t i) {
         if ( valid_arcs_prefix_sum.value(i) ) {
           const size_t pos = valid_arcs_prefix_sum[i];
           ASSERT(pos < coarse_graph._num_arcs);
@@ -353,7 +353,7 @@ namespace mt_kahypar::ds {
         }
       });
     }, [&] {
-      tbb::parallel_for(ID(0), static_cast<NodeID>(coarse_graph._num_nodes), [&](const NodeID u) {
+      tbb_kahypar::parallel_for(ID(0), static_cast<NodeID>(coarse_graph._num_nodes), [&](const NodeID u) {
         const size_t start_index_pos = valid_arcs_prefix_sum[tmp_indices_prefix_sum[u]];
         ASSERT(start_index_pos <= coarse_graph._num_arcs);
         coarse_graph._indices[u] = start_index_pos;
@@ -400,16 +400,16 @@ namespace mt_kahypar::ds {
     // deterministic reduce of node volumes since double addition is not commutative or associative
     // node volumes are computed in for loop because deterministic reduce does not have dynamic load balancing
     // whereas for loop does. this important since each node incurs O(degree) time
-    tbb::parallel_for(ID(0), static_cast<NodeID>(numNodes()), [&](NodeID u) { computeNodeVolume(u); });
+    tbb_kahypar::parallel_for(ID(0), static_cast<NodeID>(numNodes()), [&](NodeID u) { computeNodeVolume(u); });
 
-    auto aggregate_volume = [&](const tbb::blocked_range<NodeID>& r, ArcWeight partial_volume) -> ArcWeight {
+    auto aggregate_volume = [&](const tbb_kahypar::blocked_range<NodeID>& r, ArcWeight partial_volume) -> ArcWeight {
       for (NodeID u = r.begin(); u < r.end(); ++u) {
         partial_volume += nodeVolume(u);
       }
       return partial_volume;
     };
-    auto r = tbb::blocked_range<NodeID>(ID(0), numNodes(), 1000);
-    _total_volume = tbb::parallel_deterministic_reduce(r, 0.0, aggregate_volume, std::plus<>());
+    auto r = tbb_kahypar::blocked_range<NodeID>(ID(0), numNodes(), 1000);
+    _total_volume = tbb_kahypar::parallel_deterministic_reduce(r, 0.0, aggregate_volume, std::plus<>());
   }
 
   template<typename Hypergraph>
@@ -423,13 +423,13 @@ namespace mt_kahypar::ds {
     // Initialize data structure
     const HypernodeID num_hypernodes = hypergraph.initialNumNodes();
     const HypernodeID num_hyperedges = hypergraph.initialNumEdges();
-    tbb::parallel_invoke([&] {
-      tbb::parallel_for(ID(0), num_hypernodes, [&](const HypernodeID u) {
+    tbb_kahypar::parallel_invoke([&] {
+      tbb_kahypar::parallel_for(ID(0), num_hypernodes, [&](const HypernodeID u) {
         ASSERT(u + 1 < _indices.size());
         _indices[u + 1] = hypergraph.nodeDegree(u);
       });
     }, [&] {
-      tbb::parallel_for(num_hypernodes, num_hypernodes + num_hyperedges, [&](const HyperedgeID u) {
+      tbb_kahypar::parallel_for(num_hypernodes, num_hypernodes + num_hyperedges, [&](const HyperedgeID u) {
         ASSERT(u + 1 < _indices.size());
         const HyperedgeID he = u - num_hypernodes;
         _indices[u + 1] = hypergraph.edgeSize(he);
@@ -437,11 +437,11 @@ namespace mt_kahypar::ds {
     });
 
     parallel::TBBPrefixSum<size_t, ds::Array> indices_prefix_sum(_indices);
-    tbb::parallel_scan(tbb::blocked_range<size_t>(UL(0), _indices.size()), indices_prefix_sum);
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(UL(0), _indices.size()), indices_prefix_sum);
 
-    tbb::enumerable_thread_specific<size_t> local_max_degree(0);
-    tbb::parallel_invoke([&] {
-      tbb::parallel_for(ID(0), num_hypernodes, [&](const HypernodeID u) {
+    tbb_kahypar::enumerable_thread_specific<size_t> local_max_degree(0);
+    tbb_kahypar::parallel_invoke([&] {
+      tbb_kahypar::parallel_for(ID(0), num_hypernodes, [&](const HypernodeID u) {
         ASSERT(u + 1 < _indices.size());
         size_t pos = _indices[u];
         const HypernodeID hn = u;
@@ -457,7 +457,7 @@ namespace mt_kahypar::ds {
         }
       });
     }, [&] {
-      tbb::parallel_for(num_hypernodes, num_hypernodes + num_hyperedges, [&](const HyperedgeID u) {
+      tbb_kahypar::parallel_for(num_hypernodes, num_hypernodes + num_hyperedges, [&](const HyperedgeID u) {
         ASSERT(u + 1 < _indices.size());
         size_t pos = _indices[u];
         const HyperedgeID he = u - num_hypernodes;
@@ -487,16 +487,16 @@ namespace mt_kahypar::ds {
 
     // Initialize data structure
     const HypernodeID num_hypernodes = hypergraph.initialNumNodes();
-    tbb::parallel_for(ID(0), num_hypernodes, [&](const HypernodeID u) {
+    tbb_kahypar::parallel_for(ID(0), num_hypernodes, [&](const HypernodeID u) {
       ASSERT(u + 1 < _indices.size());
       _indices[u + 1] = hypergraph.nodeDegree(u);
     });
 
     parallel::TBBPrefixSum<size_t, ds::Array> indices_prefix_sum(_indices);
-    tbb::parallel_scan(tbb::blocked_range<size_t>(UL(0), num_hypernodes + 1), indices_prefix_sum);
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(UL(0), num_hypernodes + 1), indices_prefix_sum);
 
-    tbb::enumerable_thread_specific<size_t> local_max_degree(0);
-    tbb::parallel_for(ID(0), num_hypernodes, [&](const HypernodeID u) {
+    tbb_kahypar::enumerable_thread_specific<size_t> local_max_degree(0);
+    tbb_kahypar::parallel_for(ID(0), num_hypernodes, [&](const HypernodeID u) {
       ASSERT(u + 1 < _indices.size());
       size_t pos = _indices[u];
       const HypernodeID hn = u;

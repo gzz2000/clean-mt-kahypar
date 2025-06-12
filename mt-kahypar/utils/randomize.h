@@ -32,8 +32,8 @@
 #include <thread>
 #include <vector>
 
-#include <tbb/task_group.h>
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/task_group.h>
+#include <tbb_kahypar/parallel_for.h>
 
 #include "mt-kahypar/macros.h"
 #include "mt-kahypar/parallel/stl/scalable_vector.h"
@@ -181,7 +181,7 @@ class Randomize {
     const size_t step = N / P;
 
     if ( _perform_localized_random_shuffle ) {
-      tbb::parallel_for(UL(0), P, [&](const size_t k) {
+      tbb_kahypar::parallel_for(UL(0), P, [&](const size_t k) {
         const size_t start = i + k * step;
         const size_t end = i + (k == P - 1 ? N : (k + 1) * step);
         localizedShuffleVector(vector, start, end, THREAD_ID);
@@ -205,7 +205,7 @@ class Randomize {
       }
       ASSERT(swap_blocks.size() == P / 2, V(swap_blocks.size()) << V(P));
 
-      tbb::parallel_for(UL(0), P / 2, [&](const size_t k) {
+      tbb_kahypar::parallel_for(UL(0), P / 2, [&](const size_t k) {
         const size_t block_1 = swap_blocks[k].first;
         const size_t block_2 = swap_blocks[k].second;
         const size_t start_1 = i + block_1 * step;

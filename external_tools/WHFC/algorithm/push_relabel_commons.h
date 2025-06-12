@@ -3,11 +3,11 @@
 #include "../datastructure/flow_hypergraph.h"
 #include "../datastructure/queue.h"
 
-#include <tbb/scalable_allocator.h>
+#include <tbb_kahypar/scalable_allocator.h>
 
 namespace whfc {
     template<typename T>
-    using vec = std::vector<T, tbb::scalable_allocator<T>>;
+    using vec = std::vector<T, tbb_kahypar::scalable_allocator<T>>;
 
     class PushRelabelCommons {
     public:

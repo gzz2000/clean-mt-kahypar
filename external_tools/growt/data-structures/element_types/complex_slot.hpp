@@ -14,8 +14,8 @@ namespace growt
 {
 
 #ifdef TBB_AS_DEFAULT
-#include "tbb/scalable_allocator.h"
-using default_allocator = tbb::scalable_allocator<void>;
+#include "tbb_kahypar/scalable_allocator.h"
+using default_allocator = tbb_kahypar::scalable_allocator<void>;
 #else
 using default_allocator = std::allocator<void>;
 #endif

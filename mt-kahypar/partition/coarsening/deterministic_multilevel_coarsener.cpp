@@ -26,7 +26,7 @@
 
 #include "deterministic_multilevel_coarsener.h"
 
-#include <tbb/parallel_sort.h>
+#include <tbb_kahypar/parallel_sort.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/utils/hash.h"
@@ -43,7 +43,7 @@ bool DeterministicMultilevelCoarsener<TypeTraits>::coarseningPassImpl() {
   size_t num_nodes = Base::currentNumNodes();
   const double num_nodes_before_pass = num_nodes;
   vec<HypernodeID> clusters(num_nodes, kInvalidHypernode);
-  tbb::parallel_for(UL(0), num_nodes, [&](HypernodeID u) {
+  tbb_kahypar::parallel_for(UL(0), num_nodes, [&](HypernodeID u) {
     cluster_weight[u] = hg.nodeWeight(u);
     opportunistic_cluster_weight[u] = cluster_weight[u];
     propositions[u] = u;
@@ -57,18 +57,18 @@ bool DeterministicMultilevelCoarsener<TypeTraits>::coarseningPassImpl() {
     size_t first = permutation.bucket_bounds[first_bucket], last = permutation.bucket_bounds[last_bucket];
 
     // each vertex finds a cluster it wants to join
-    tbb::parallel_for(first, last, [&](size_t pos) {
+    tbb_kahypar::parallel_for(first, last, [&](size_t pos) {
       const HypernodeID u = permutation.at(pos);
       if (cluster_weight[u] == hg.nodeWeight(u) && hg.nodeIsEnabled(u)) {
         calculatePreferredTargetCluster(u, clusters);
       }
     });
 
-    tbb::enumerable_thread_specific<size_t> num_contracted_nodes { 0 };
+    tbb_kahypar::enumerable_thread_specific<size_t> num_contracted_nodes { 0 };
 
     // already approve if we can grant all requests for proposed cluster
     // otherwise insert to shared vector so that we can group vertices by cluster
-    tbb::parallel_for(first, last, [&](size_t pos) {
+    tbb_kahypar::parallel_for(first, last, [&](size_t pos) {
       HypernodeID u = permutation.at(pos);
       HypernodeID target = propositions[u];
       if (target != u) {
@@ -165,16 +165,16 @@ void DeterministicMultilevelCoarsener<TypeTraits>::calculatePreferredTargetClust
 template<typename TypeTraits>
 size_t DeterministicMultilevelCoarsener<TypeTraits>::approveVerticesInTooHeavyClusters(vec<HypernodeID>& clusters) {
   const Hypergraph& hg = Base::currentHypergraph();
-  tbb::enumerable_thread_specific<size_t> num_contracted_nodes { 0 };
+  tbb_kahypar::enumerable_thread_specific<size_t> num_contracted_nodes { 0 };
 
   // group vertices by desired cluster, if their cluster is too heavy. approve the lower weight nodes first
   auto comp = [&](HypernodeID lhs, HypernodeID rhs) {
     HypernodeWeight wl = hg.nodeWeight(lhs), wr = hg.nodeWeight(rhs);
     return std::tie(propositions[lhs], wl, lhs) < std::tie(propositions[rhs], wr, rhs);
   };
-  tbb::parallel_sort(nodes_in_too_heavy_clusters.begin(), nodes_in_too_heavy_clusters.end(), comp);
+  tbb_kahypar::parallel_sort(nodes_in_too_heavy_clusters.begin(), nodes_in_too_heavy_clusters.end(), comp);
 
-  tbb::parallel_for(UL(0), nodes_in_too_heavy_clusters.size(), [&](size_t pos) {
+  tbb_kahypar::parallel_for(UL(0), nodes_in_too_heavy_clusters.size(), [&](size_t pos) {
     HypernodeID target = propositions[nodes_in_too_heavy_clusters[pos]];
     // the first vertex for this cluster handles the approval
     size_t num_contracted_local = 0;

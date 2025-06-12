@@ -29,9 +29,9 @@
 
 #include <queue>
 
-#include <tbb/parallel_reduce.h>
-#include <tbb/parallel_invoke.h>
-#include <tbb/enumerable_thread_specific.h>
+#include <tbb_kahypar/parallel_reduce.h>
+#include <tbb_kahypar/parallel_invoke.h>
+#include <tbb_kahypar/enumerable_thread_specific.h>
 
 #include "mt-kahypar/parallel/parallel_prefix_sum.h"
 #include "mt-kahypar/datastructures/streaming_vector.h"
@@ -43,9 +43,9 @@ namespace ds {
 // ! Initializes the data structure in parallel
 void ContractionTree::initialize(const HypernodeID num_hypernodes) {
   _num_hypernodes = num_hypernodes;
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     _tree.resize(_num_hypernodes);
-    tbb::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID hn) {
+    tbb_kahypar::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID hn) {
       node(hn).setParent(hn);
     });
   }, [&] {
@@ -61,7 +61,7 @@ void ContractionTree::initialize(const HypernodeID num_hypernodes) {
 void ContractionTree::finalize(const size_t num_versions) {
   ASSERT(!_finalized, "Contraction tree already finalized");
   // Compute out degrees of each tree node
-  tbb::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID hn) {
+  tbb_kahypar::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID hn) {
     ASSERT(node(hn).pendingContractions() == 0, "There are"
       << node(hn).pendingContractions() << "pending contractions for node" << hn);
     const HypernodeID parent = node(hn).parent();
@@ -75,15 +75,15 @@ void ContractionTree::finalize(const size_t num_versions) {
   parallel::scalable_vector<parallel::IntegralAtomicWrapper<HypernodeID>> incidence_array_pos;
   parallel::TBBPrefixSum<parallel::IntegralAtomicWrapper<HypernodeID>, parallel::scalable_vector>
     out_degree_prefix_sum(_out_degrees);
-  tbb::parallel_invoke([&] {
-    tbb::parallel_scan(tbb::blocked_range<size_t>(UL(0), _out_degrees.size()), out_degree_prefix_sum);
+  tbb_kahypar::parallel_invoke([&] {
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(UL(0), _out_degrees.size()), out_degree_prefix_sum);
   }, [&] {
     incidence_array_pos.assign(_num_hypernodes, parallel::IntegralAtomicWrapper<HypernodeID>(0));
   });
 
   // Reverse parent pointer of contraction tree such that it can be traversed in top-down fashion
   StreamingVector<HypernodeID> tmp_roots;
-  tbb::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID hn) {
+  tbb_kahypar::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID hn) {
     const HypernodeID parent = node(hn).parent();
     if ( parent != hn ) {
       const HypernodeID pos = _out_degrees[parent] + incidence_array_pos[parent]++;
@@ -109,7 +109,7 @@ void ContractionTree::finalize(const size_t num_versions) {
   // the version number of the vertex itself. Note, that for all vertices in the contraction
   // tree version(u) <= version(parent(u)).
   parallel::scalable_vector<StreamingVector<HypernodeID>> tmp_version_roots(num_versions);
-  tbb::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID u) {
+  tbb_kahypar::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID u) {
     std::sort(_incidence_array.begin() + _out_degrees[u],
               _incidence_array.begin() + _out_degrees[u + 1],
               [&](const HypernodeID& u, const HypernodeID& v) {
@@ -136,13 +136,13 @@ void ContractionTree::finalize(const size_t num_versions) {
     }
   });
   _version_roots.resize(num_versions);
-  tbb::parallel_for(UL(0), num_versions, [&](const size_t i) {
+  tbb_kahypar::parallel_for(UL(0), num_versions, [&](const size_t i) {
     _version_roots[i] = tmp_version_roots[i].copy_parallel();
     tmp_version_roots[i].clear_parallel();
   });
 
   // Compute subtree sizes of each root in parallel via dfs
-  tbb::parallel_for(UL(0), _roots.size(), [&](const size_t i) {
+  tbb_kahypar::parallel_for(UL(0), _roots.size(), [&](const size_t i) {
     parallel::scalable_vector<HypernodeID> dfs;
     dfs.push_back(_roots[i]);
     while( !dfs.empty() ) {
@@ -166,7 +166,7 @@ void ContractionTree::finalize(const size_t num_versions) {
     }
   });
 
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     parallel::free(incidence_array_pos);
   }, [&] {
     tmp_roots.clear_parallel();
@@ -182,7 +182,7 @@ ContractionTree ContractionTree::copy(parallel_tag_t) const {
   tree._num_hypernodes = _num_hypernodes;
   tree._finalized = _finalized;
 
-  tbb::parallel_invoke([&] {
+  tbb_kahypar::parallel_invoke([&] {
     if (!_tree.empty()) {
       tree._tree.resize(_tree.size());
       memcpy(tree._tree.data(), _tree.data(), sizeof(Node) * _tree.size());
@@ -195,7 +195,7 @@ ContractionTree ContractionTree::copy(parallel_tag_t) const {
   }, [&] {
     const size_t num_versions = _version_roots.size();
     tree._version_roots.resize(num_versions);
-    tbb::parallel_for(UL(0), num_versions, [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), num_versions, [&](const size_t i) {
       if (!_version_roots[i].empty()) {
         tree._version_roots[i].resize(_version_roots[i].size());
         memcpy(tree._version_roots[i].data(), _version_roots[i].data(),
@@ -257,8 +257,8 @@ ContractionTree ContractionTree::copy() const {
 
 // ! Resets internal data structures
 void ContractionTree::reset() {
-  tbb::parallel_invoke([&] {
-    tbb::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID hn) {
+  tbb_kahypar::parallel_invoke([&] {
+    tbb_kahypar::parallel_for(ID(0), _num_hypernodes, [&](const HypernodeID hn) {
       _tree[hn].reset(hn);
       _out_degrees[hn].store(0);
     });
@@ -390,7 +390,7 @@ BatchVector ContractionTree::createBatchUncontractionHierarchyForVersion(BatchIn
   const size_t num_hardware_threads = std::thread::hardware_concurrency();
   parallel::scalable_vector<PQ> local_pqs(num_hardware_threads);
   const parallel::scalable_vector<HypernodeID>& roots = roots_of_version(version);
-  tbb::parallel_for(UL(0), roots.size(), [&](const size_t i) {
+  tbb_kahypar::parallel_for(UL(0), roots.size(), [&](const size_t i) {
     const int cpu_id = THREAD_ID;
     push_into_pq(local_pqs[cpu_id], roots[i]);
   });
@@ -398,7 +398,7 @@ BatchVector ContractionTree::createBatchUncontractionHierarchyForVersion(BatchIn
   using LocalBatchAssignments = parallel::scalable_vector<BatchAssignment>;
   parallel::scalable_vector<LocalBatchAssignments> local_batch_assignments(num_hardware_threads);
   parallel::scalable_vector<size_t> local_batch_indices(num_hardware_threads, 0);
-  tbb::parallel_for(UL(0), num_hardware_threads, [&](const size_t i) {
+  tbb_kahypar::parallel_for(UL(0), num_hardware_threads, [&](const size_t i) {
     size_t& current_batch_index = local_batch_indices[i];
     LocalBatchAssignments& batch_assignments = local_batch_assignments[i];
     PQ& pq = local_pqs[i];
@@ -476,11 +476,11 @@ BatchVector ContractionTree::createBatchUncontractionHierarchyForVersion(BatchIn
   // into the global batch uncontraction vector.
   const size_t num_batches = batch_assigner.numberOfNonEmptyBatches();
   BatchVector batches(num_batches);
-  tbb::parallel_for(UL(0), num_batches, [&](const size_t batch_index) {
+  tbb_kahypar::parallel_for(UL(0), num_batches, [&](const size_t batch_index) {
     batches[batch_index].resize(batch_assigner.batchSize(batch_index));
   });
 
-  tbb::parallel_for(UL(0), num_hardware_threads, [&](const size_t i) {
+  tbb_kahypar::parallel_for(UL(0), num_hardware_threads, [&](const size_t i) {
     LocalBatchAssignments& batch_assignments = local_batch_assignments[i];
     for ( const BatchAssignment& batch_assignment : batch_assignments ) {
       const size_t batch_index = batch_assignment.batch_index;

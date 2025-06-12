@@ -27,7 +27,7 @@
 
 #pragma once
 
-#include <tbb/concurrent_vector.h>
+#include <tbb_kahypar/concurrent_vector.h>
 
 #include "algorithm/hyperflowcutter.h"
 #include "algorithm/sequential_push_relabel.h"

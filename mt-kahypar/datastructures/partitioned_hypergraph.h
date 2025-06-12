@@ -31,7 +31,7 @@
 #include <type_traits>
 #include <mutex>
 
-#include <tbb/parallel_invoke.h>
+#include <tbb_kahypar/parallel_invoke.h>
 
 #include "kahypar-resources/meta/mandatory.h"
 
@@ -128,7 +128,7 @@ class PartitionedHypergraph {
     _part_ids(),
     _con_info(),
     _pin_count_update_ownership() {
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       _part_ids.resize(
         "Refinement", "vertex_part_info", hypergraph.initialNumNodes());
       _part_ids.assign(hypergraph.initialNumNodes(), kInvalidPartition);
@@ -153,7 +153,7 @@ class PartitionedHypergraph {
   }
 
   void resetData() {
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
     }, [&] {
       _part_ids.assign(_part_ids.size(), kInvalidPartition);
     }, [&] {
@@ -413,7 +413,7 @@ class PartitionedHypergraph {
   template<typename GainCache>
   void uncontract(const Batch& batch, GainCache& gain_cache) {
     // Set block ids of contraction partners
-    tbb::parallel_for(UL(0), batch.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), batch.size(), [&](const size_t i) {
       const Memento& memento = batch[i];
       ASSERT(nodeIsEnabled(memento.u));
       ASSERT(!nodeIsEnabled(memento.v));
@@ -435,7 +435,7 @@ class PartitionedHypergraph {
       });
 
     if constexpr ( GainCache::initializes_gain_cache_entry_after_batch_uncontractions ) {
-      tbb::parallel_for(UL(0), batch.size(), [&](const size_t i) {
+      tbb_kahypar::parallel_for(UL(0), batch.size(), [&](const size_t i) {
         const Memento& memento = batch[i];
         gain_cache.initializeGainCacheEntryForNode(*this, memento.v);
       });
@@ -454,8 +454,8 @@ class PartitionedHypergraph {
     // Recalculate pin count in parts
     const size_t incidence_array_start = _hg->hyperedge(he).firstEntry();
     const size_t incidence_array_end = _hg->hyperedge(he).firstInvalidEntry();
-    tbb::enumerable_thread_specific< vec<HypernodeID> > ets_pin_count_in_part(_k, 0);
-    tbb::parallel_for(incidence_array_start, incidence_array_end, [&](const size_t pos) {
+    tbb_kahypar::enumerable_thread_specific< vec<HypernodeID> > ets_pin_count_in_part(_k, 0);
+    tbb_kahypar::parallel_for(incidence_array_start, incidence_array_end, [&](const size_t pos) {
       const HypernodeID pin = _hg->_incidence_array[pos];
       const PartitionID block = partID(pin);
       ++ets_pin_count_in_part.local()[block];
@@ -489,7 +489,7 @@ class PartitionedHypergraph {
     // single-pin hyperedges. Note, that restoring parallel hyperedges does not change any
     // value in the gain cache, since it already contributes to the gain via its representative.
     tls_enumerable_thread_specific< vec<HypernodeID> > ets_pin_count_in_part(_k, 0);
-    tbb::parallel_for(UL(0), hes_to_restore.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), hes_to_restore.size(), [&](const size_t i) {
       const HyperedgeID he = hes_to_restore[i].removed_hyperedge;
       const HyperedgeID representative = hes_to_restore[i].representative;
       ASSERT(edgeIsEnabled(he));
@@ -549,7 +549,7 @@ class PartitionedHypergraph {
       std::swap(_part_ids, part_ids);
     } else {
       ASSERT(part_ids.size() <= _part_ids.size());
-      tbb::parallel_for(UL(0), part_ids.size(), [&](const size_t i) {
+      tbb_kahypar::parallel_for(UL(0), part_ids.size(), [&](const size_t i) {
         part_ids[i] = _part_ids[i];
       });
     }
@@ -716,7 +716,7 @@ class PartitionedHypergraph {
   // ! setOnlyNodePart(...). In that case, block weights and pin counts in part for
   // ! each hyperedge must be initialized explicitly here.
   void initializePartition() {
-    tbb::parallel_invoke(
+    tbb_kahypar::parallel_invoke(
             [&] { initializeBlockWeights(); },
             [&] { initializePinCountInPart(); }
     );
@@ -880,7 +880,7 @@ class PartitionedHypergraph {
     vec<HyperedgeID> he_mapping(_hg->initialNumEdges(), kInvalidHyperedge);
     HypernodeID num_hypernodes = 0;
     HypernodeID num_hyperedges = 0;
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       for ( const HypernodeID& hn : nodes() ) {
         if ( partID(hn) == block ) {
           hn_mapping[hn] = num_hypernodes++;
@@ -901,7 +901,7 @@ class PartitionedHypergraph {
     vec<HyperedgeWeight> hyperedge_weight;
     vec<HypernodeWeight> hypernode_weight;
     vec<uint8_t> extracted_already_cut;
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       edge_vector.resize(num_hyperedges);
       hyperedge_weight.resize(num_hyperedges);
       doParallelForAllEdges([&](const HyperedgeID he) {
@@ -967,7 +967,7 @@ class PartitionedHypergraph {
     if ( stable_construction_of_incident_edges ) {
       // Stable construction for deterministic behavior requires
       // to determine node and edge IDs sequentially
-      tbb::parallel_invoke([&] {
+      tbb_kahypar::parallel_invoke([&] {
         // Compactify node IDs
         for ( const HypernodeID& hn : nodes() ) {
           const PartitionID block = partID(hn);
@@ -988,7 +988,7 @@ class PartitionedHypergraph {
       });
     } else {
       vec<ds::StreamingVector<HyperedgeID>> hes2block_stream(k);
-      tbb::parallel_invoke([&] {
+      tbb_kahypar::parallel_invoke([&] {
         // Compactify node IDs
         doParallelForAllNodes([&](const HypernodeID& hn) {
           const PartitionID block = partID(hn);
@@ -1007,7 +1007,7 @@ class PartitionedHypergraph {
           }
         });
         // Copy hyperedges of a block into one vector
-        tbb::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
+        tbb_kahypar::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
           hes2block[p] = hes2block_stream[p].copy_parallel();
         });
       });
@@ -1020,10 +1020,10 @@ class PartitionedHypergraph {
     vec<vec<HyperedgeWeight>> he_weight(k);
     vec<vec<HypernodeWeight>> hn_weight(k);
     // Allocate auxilliary graph data structures
-    tbb::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
+    tbb_kahypar::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
       const HypernodeID num_nodes = nodes_cnt[p];
       const HyperedgeID num_edges = hes2block[p].size();
-      tbb::parallel_invoke([&] {
+      tbb_kahypar::parallel_invoke([&] {
         edge_vector[p].resize(num_edges);
       }, [&] {
         he_weight[p].resize(num_edges);
@@ -1037,9 +1037,9 @@ class PartitionedHypergraph {
     });
 
     // Write blocks to auxilliary graph data structure
-    tbb::parallel_invoke([&] {
-      tbb::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
-        tbb::parallel_for(UL(0), hes2block[p].size(), [&, p](const size_t i) {
+    tbb_kahypar::parallel_invoke([&] {
+      tbb_kahypar::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
+        tbb_kahypar::parallel_for(UL(0), hes2block[p].size(), [&, p](const size_t i) {
           const HyperedgeID he = hes2block[p][i];
           he_weight[p][i] = edgeWeight(he);
           for ( const HypernodeID& pin : pins(he) ) {
@@ -1061,15 +1061,15 @@ class PartitionedHypergraph {
     }, [&] {
       if ( already_cut ) {
         const vec<uint8_t>& already_cut_hes = *already_cut;
-        tbb::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
-          tbb::parallel_for(UL(0), hes2block[p].size(), [&, p](const size_t i) {
+        tbb_kahypar::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
+          tbb_kahypar::parallel_for(UL(0), hes2block[p].size(), [&, p](const size_t i) {
             extracted_blocks[p].already_cut[i] = already_cut_hes[hes2block[p][i]];
           });
         });
       }
     });
 
-    tbb::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
+    tbb_kahypar::parallel_for(static_cast<PartitionID>(0), k, [&](const PartitionID p) {
       const HypernodeID num_nodes = nodes_cnt[p];
       const HyperedgeID num_hyperedges = hes2block[p].size();
       extracted_blocks[p].hg = HypergraphFactory::construct(num_nodes, num_hyperedges,
@@ -1093,7 +1093,7 @@ class PartitionedHypergraph {
 
   void freeInternalData() {
     if ( _k > 0 ) {
-      tbb::parallel_invoke( [&] {
+      tbb_kahypar::parallel_invoke( [&] {
         parallel::parallel_free(_part_ids, _pin_count_update_ownership);
       }, [&] {
         _con_info.freeInternalData();
@@ -1110,7 +1110,7 @@ class PartitionedHypergraph {
   }
 
   void initializeBlockWeights() {
-    auto accumulate = [&](tbb::blocked_range<HypernodeID>& r) {
+    auto accumulate = [&](tbb_kahypar::blocked_range<HypernodeID>& r) {
       vec<HypernodeWeight> pws(_k, 0);  // this is not enumerable_thread_specific because of the static partitioner
       for (HypernodeID u = r.begin(); u < r.end(); ++u) {
         if ( nodeIsEnabled(u) ) {
@@ -1122,16 +1122,16 @@ class PartitionedHypergraph {
       applyPartWeightUpdates(pws);
     };
 
-    tbb::parallel_for(tbb::blocked_range<HypernodeID>(HypernodeID(0), initialNumNodes()),
+    tbb_kahypar::parallel_for(tbb_kahypar::blocked_range<HypernodeID>(HypernodeID(0), initialNumNodes()),
                       accumulate,
-                      tbb::static_partitioner()
+                      tbb_kahypar::static_partitioner()
     );
   }
 
   void initializePinCountInPart() {
     tls_enumerable_thread_specific< vec<HypernodeID> > ets_pin_count_in_part(_k, 0);
 
-    auto assign = [&](tbb::blocked_range<HyperedgeID>& r) {
+    auto assign = [&](tbb_kahypar::blocked_range<HyperedgeID>& r) {
       vec<HypernodeID>& pin_counts = ets_pin_count_in_part.local();
       for (HyperedgeID he = r.begin(); he < r.end(); ++he) {
         if ( edgeIsEnabled(he) ) {
@@ -1151,7 +1151,7 @@ class PartitionedHypergraph {
       }
     };
 
-    tbb::parallel_for(tbb::blocked_range<HyperedgeID>(HyperedgeID(0), initialNumEdges()), assign);
+    tbb_kahypar::parallel_for(tbb_kahypar::blocked_range<HyperedgeID>(HyperedgeID(0), initialNumEdges()), assign);
   }
 
   HypernodeID pinCountInPartRecomputed(const HyperedgeID e, PartitionID p) const {

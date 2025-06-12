@@ -31,7 +31,7 @@
 #include <limits>
 #include <vector>
 
-#include <tbb/parallel_for.h>
+#include <tbb_kahypar/parallel_for.h>
 
 #include "mt-kahypar/definitions.h"
 #include "mt-kahypar/macros.h"
@@ -431,7 +431,7 @@ const DeepPartitioningResult<TypeTraits>& select_best_partition(
   vec<bool> isBalanced(partitions.size(), false);
 
   // Compute objective value and perform balance check for each partition
-  tbb::task_group tg;
+  tbb_kahypar::task_group tg;
   for ( size_t i = 0; i < partitions.size(); ++i ) {
     tg.run([&, i] {
       objectives[i] = metrics::quality(
@@ -567,7 +567,7 @@ void bipartition_each_block(typename TypeTraits::PartitionedHypergraph& partitio
   utils::ProgressBar progress(current_k, current_objective, progress_bar_enabled);
   vec<DeepPartitioningResult<TypeTraits>> bipartitions(current_k);
   vec<PartitionID> block_ranges(1, 0);
-  tbb::task_group tg;
+  tbb_kahypar::task_group tg;
   for ( PartitionID block = 0; block < current_k; ++block ) {
     // The recursive bipartitioning tree stores for each block of the current partition
     // the number of blocks in which we have to further bipartition the corresponding block
@@ -620,7 +620,7 @@ void bipartition_each_block(typename TypeTraits::PartitionedHypergraph& partitio
   }(), "Cut of extracted blocks does not sum up to current objective");
 
   timer.start_timer("free_hypergraphs", "Free Hypergraphs");
-  tbb::parallel_for(UL(0), bipartitions.size(), [&](const size_t i) {
+  tbb_kahypar::parallel_for(UL(0), bipartitions.size(), [&](const size_t i) {
     DeepPartitioningResult<TypeTraits> tmp_res;
     tmp_res = std::move(bipartitions[i]);
   });
@@ -774,7 +774,7 @@ PartitionID deep_multilevel_partitioning(typename TypeTraits::PartitionedHypergr
         << "- k =" << rb_tree.get_maximum_number_of_blocks(current_num_nodes);
 
     // Call deep multilevel scheme recursively
-    tbb::task_group tg;
+    tbb_kahypar::task_group tg;
     vec<DeepPartitioningResult<TypeTraits>> results(num_parallel_calls);
     for ( size_t i = 0; i < num_parallel_calls; ++i ) {
       tg.run([&, i] {

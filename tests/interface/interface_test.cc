@@ -29,7 +29,7 @@
 
 #include <thread>
 
-#include <tbb/parallel_invoke.h>
+#include <tbb_kahypar/parallel_invoke.h>
 
 #include "mtkahypar.h"
 #include "mt-kahypar/macros.h"
@@ -1066,7 +1066,7 @@ namespace mt_kahypar {
   }
 
   TEST_F(APartitioner, CanPartitionTwoHypergraphsSimultanously) {
-    tbb::parallel_invoke([&]() {
+    tbb_kahypar::parallel_invoke([&]() {
       PartitionAnotherHypergraph(HYPERGRAPH_FILE, HMETIS, DETERMINISTIC, 4, 0.03, KM1, false);
     }, [&] {
       PartitionAnotherHypergraph(GRAPH_FILE, METIS, DEFAULT, 8, 0.03, CUT, false);
@@ -1074,7 +1074,7 @@ namespace mt_kahypar {
   }
 
   TEST_F(APartitioner, CanPartitionFourHypergraphsSimultanously) {
-    tbb::parallel_invoke([&]() {
+    tbb_kahypar::parallel_invoke([&]() {
       PartitionAnotherHypergraph(HYPERGRAPH_FILE, HMETIS, DETERMINISTIC, 4, 0.03, KM1, false);
     }, [&] {
       PartitionAnotherHypergraph(GRAPH_FILE, METIS, DEFAULT, 8, 0.03, CUT, false);
@@ -1319,7 +1319,7 @@ namespace mt_kahypar {
   TEST_F(APartitioner, PartitionsManyHypergraphsInParallel) {
     std::atomic<size_t> cnt(0);
     size_t max_runs = 100;
-    tbb::parallel_for(0U, std::thread::hardware_concurrency(), [&](const int /*id*/) {
+    tbb_kahypar::parallel_for(0U, std::thread::hardware_concurrency(), [&](const int /*id*/) {
       while ( cnt.load(std::memory_order_relaxed) < max_runs ) {
         ++cnt;
         PartitionAnotherHypergraph("test_instances/test_instance.hgr", HMETIS, DEFAULT, 4, 0.03, KM1, false);

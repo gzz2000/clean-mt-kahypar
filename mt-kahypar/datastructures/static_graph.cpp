@@ -36,8 +36,8 @@
 
 #include <algorithm>
 
-#include <tbb/parallel_reduce.h>
-#include <tbb/parallel_sort.h>
+#include <tbb_kahypar/parallel_reduce.h>
+#include <tbb_kahypar/parallel_sort.h>
 
 
 namespace mt_kahypar::ds {
@@ -88,11 +88,11 @@ namespace mt_kahypar::ds {
 
     // Prefix sum determines vertex ids in coarse graph
     parallel::TBBPrefixSum<HyperedgeID, Array> mapping_prefix_sum(mapping);
-    tbb::parallel_scan(tbb::blocked_range<size_t>(ID(0), _num_nodes), mapping_prefix_sum);
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(ID(0), _num_nodes), mapping_prefix_sum);
     HypernodeID coarsened_num_nodes = mapping_prefix_sum.total_sum();
 
     // Remap community ids
-    tbb::parallel_for(ID(0), _num_nodes, [&](const HypernodeID& node) {
+    tbb_kahypar::parallel_for(ID(0), _num_nodes, [&](const HypernodeID& node) {
       if ( nodeIsEnabled(node) ) {
         communities[node] = mapping_prefix_sum[communities[node]];
       } else {
@@ -136,8 +136,8 @@ namespace mt_kahypar::ds {
     parallel::scalable_vector<parallel::IntegralAtomicWrapper<HyperedgeID>> tmp_incident_edges_pos;
     parallel::TBBPrefixSum<parallel::IntegralAtomicWrapper<HyperedgeID>, Array>
             tmp_incident_edges_prefix_sum(tmp_num_incident_edges);
-    tbb::parallel_invoke([&] {
-      tbb::parallel_scan(tbb::blocked_range<size_t>(
+    tbb_kahypar::parallel_invoke([&] {
+      tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(
               ID(0), static_cast<size_t>(coarsened_num_nodes)), tmp_incident_edges_prefix_sum);
     }, [&] {
       tmp_incident_edges_pos.assign(coarsened_num_nodes, parallel::IntegralAtomicWrapper<HyperedgeID>(0));
@@ -176,7 +176,7 @@ namespace mt_kahypar::ds {
     // A list of high degree vertices that are processed afterwards
     parallel::scalable_vector<HypernodeID> high_degree_vertices;
     std::mutex high_degree_vertex_mutex;
-    tbb::parallel_for(ID(0), coarsened_num_nodes, [&](const HypernodeID& coarse_node) {
+    tbb_kahypar::parallel_for(ID(0), coarsened_num_nodes, [&](const HypernodeID& coarse_node) {
       const size_t incident_edges_start = tmp_incident_edges_prefix_sum[coarse_node];
       const size_t incident_edges_end = tmp_incident_edges_prefix_sum[coarse_node + 1];
       const size_t tmp_degree = incident_edges_end - incident_edges_start;
@@ -211,9 +211,9 @@ namespace mt_kahypar::ds {
         const size_t size_of_range = incident_edges_end - incident_edges_start;
 
         // Insert incident edges into concurrent bucket map
-        const size_t num_chunks = tbb::this_task_arena::max_concurrency();
+        const size_t num_chunks = tbb_kahypar::this_task_arena::max_concurrency();
         const size_t chunk_size = parallel::chunking::idiv_ceil(size_of_range, num_chunks);
-        tbb::parallel_for(UL(0), num_chunks, [&](const size_t chunk_id) {
+        tbb_kahypar::parallel_for(UL(0), num_chunks, [&](const size_t chunk_id) {
           auto [start_offset, end_offset] = parallel::chunking::bounds(chunk_id, size_of_range, chunk_size);
           const size_t start = incident_edges_start + start_offset;
           const size_t end = incident_edges_start + end_offset;
@@ -228,11 +228,11 @@ namespace mt_kahypar::ds {
             ASSERT(edge.isValid());
             incident_edges_map.insert(edge.getTarget(), TmpEdgeInformation(edge));
           }
-        }, tbb::static_partitioner());
+        }, tbb_kahypar::static_partitioner());
 
         // Process each bucket in parallel and deduplicate the edges
         std::atomic<size_t> incident_edges_pos(incident_edges_start);
-        tbb::parallel_for(UL(0), incident_edges_map.numBuckets(), [&](const size_t bucket) {
+        tbb_kahypar::parallel_for(UL(0), incident_edges_map.numBuckets(), [&](const size_t bucket) {
           auto& incident_edges_bucket = incident_edges_map.getBucket(bucket);
           const HyperedgeID bucket_degree = deduplicateTmpEdges(incident_edges_bucket.data(),
                                               incident_edges_bucket.data() + incident_edges_bucket.size());
@@ -249,14 +249,14 @@ namespace mt_kahypar::ds {
 
       // We still sort the adjacent edges since this results in better cache locality when accessing the neighbors.
       // Also, sorting is necessary for deterministic partitioning.
-      tbb::parallel_for(UL(0), resulting_ranges.size(), [&](const size_t i) {
+      tbb_kahypar::parallel_for(UL(0), resulting_ranges.size(), [&](const size_t i) {
         auto [start, end] = resulting_ranges[i];
         auto comparator = [](const TmpEdgeInformation& e1, const TmpEdgeInformation& e2) {
           return e1._target < e2._target;
         };
         if (end - start > HIGH_DEGREE_CONTRACTION_THRESHOLD
-            || resulting_ranges.size() < 2 * static_cast<size_t>(tbb::this_task_arena::max_concurrency())) {
-          tbb::parallel_sort(tmp_edges.begin() + start, tmp_edges.begin() + end, comparator);
+            || resulting_ranges.size() < 2 * static_cast<size_t>(tbb_kahypar::this_task_arena::max_concurrency())) {
+          tbb_kahypar::parallel_sort(tmp_edges.begin() + start, tmp_edges.begin() + end, comparator);
         } else {
           std::sort(tmp_edges.begin() + start, tmp_edges.begin() + end, comparator);
         }
@@ -274,7 +274,7 @@ namespace mt_kahypar::ds {
 
     // Compute number of edges in coarse graph (those flagged as valid)
     parallel::TBBPrefixSum<HyperedgeID, Array> degree_mapping(node_sizes);
-    tbb::parallel_scan(tbb::blocked_range<size_t>(
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(
             ID(0), static_cast<size_t>(coarsened_num_nodes)), degree_mapping);
     const HyperedgeID coarsened_num_edges = degree_mapping.total_sum();
     hypergraph._num_nodes = coarsened_num_nodes;
@@ -294,12 +294,12 @@ namespace mt_kahypar::ds {
       }()
     );
 
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       // Copy edges
       edge_id_mapping.assign(_num_edges / 2, 0);
       hypergraph._edges.resizeNoAssign(coarsened_num_edges);
       hypergraph._unique_edge_ids.resizeNoAssign(coarsened_num_edges);
-      tbb::parallel_for(ID(0), coarsened_num_nodes, [&](const HyperedgeID& coarse_node) {
+      tbb_kahypar::parallel_for(ID(0), coarsened_num_nodes, [&](const HyperedgeID& coarse_node) {
         const HyperedgeID tmp_edges_start = tmp_nodes[coarse_node].firstEntry();
         const HyperedgeID edges_start = degree_mapping[coarse_node];
         auto handle_edge = [&](const HyperedgeID& index) {
@@ -315,7 +315,7 @@ namespace mt_kahypar::ds {
         };
 
         if (degree_mapping.value(coarse_node) > HIGH_DEGREE_CONTRACTION_THRESHOLD / 8) {
-          tbb::parallel_for(ID(0), degree_mapping.value(coarse_node), handle_edge);
+          tbb_kahypar::parallel_for(ID(0), degree_mapping.value(coarse_node), handle_edge);
         } else {
           for (size_t index = 0; index < degree_mapping.value(coarse_node); ++index) {
             handle_edge(index);
@@ -324,7 +324,7 @@ namespace mt_kahypar::ds {
       });
     }, [&] {
       hypergraph._nodes.resize(coarsened_num_nodes + 1);
-      tbb::parallel_for(ID(0), coarsened_num_nodes, [&](const HyperedgeID& coarse_node) {
+      tbb_kahypar::parallel_for(ID(0), coarsened_num_nodes, [&](const HyperedgeID& coarse_node) {
         Node& node = hypergraph.node(coarse_node);
         node.enable();
         node.setFirstEntry(degree_mapping[coarse_node]);
@@ -340,10 +340,10 @@ namespace mt_kahypar::ds {
 
     // Remap unique edge ids via prefix sum
     parallel::TBBPrefixSum<HyperedgeID, Array> edge_id_prefix_sum(edge_id_mapping);
-    tbb::parallel_scan(tbb::blocked_range<size_t>(ID(0), _num_edges / 2), edge_id_prefix_sum);
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(ID(0), _num_edges / 2), edge_id_prefix_sum);
     ASSERT(edge_id_prefix_sum.total_sum() == coarsened_num_edges / 2);
 
-    tbb::parallel_for(ID(0), coarsened_num_edges, [&](const HyperedgeID& e) {
+    tbb_kahypar::parallel_for(ID(0), coarsened_num_edges, [&](const HyperedgeID& e) {
       HyperedgeID& unique_id = hypergraph._unique_edge_ids[e];
       unique_id = edge_id_prefix_sum[unique_id];
     });
@@ -453,7 +453,7 @@ namespace mt_kahypar::ds {
     hypergraph._num_edges = _num_edges;
     hypergraph._total_weight = _total_weight;
 
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       hypergraph._nodes.resize(_nodes.size());
       memcpy(hypergraph._nodes.data(), _nodes.data(),
              sizeof(Node) * _nodes.size());
@@ -512,8 +512,8 @@ namespace mt_kahypar::ds {
 
   // ! Computes the total node weight of the hypergraph
   void StaticGraph::computeAndSetTotalNodeWeight(parallel_tag_t) {
-    _total_weight = tbb::parallel_reduce(tbb::blocked_range<HypernodeID>(ID(0), _num_nodes), 0,
-                                         [this](const tbb::blocked_range<HypernodeID>& range, HypernodeWeight init) {
+    _total_weight = tbb_kahypar::parallel_reduce(tbb_kahypar::blocked_range<HypernodeID>(ID(0), _num_nodes), 0,
+                                         [this](const tbb_kahypar::blocked_range<HypernodeID>& range, HypernodeWeight init) {
                                            HypernodeWeight weight = init;
                                            for (HypernodeID hn = range.begin(); hn < range.end(); ++hn) {
                                              if (nodeIsEnabled(hn)) {

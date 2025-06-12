@@ -28,9 +28,9 @@
 
 #include <string>
 
-#include <tbb/parallel_for.h>
-#include <tbb/parallel_sort.h>
-#include <tbb/parallel_scan.h>
+#include <tbb_kahypar/parallel_for.h>
+#include <tbb_kahypar/parallel_sort.h>
+#include <tbb_kahypar/parallel_scan.h>
 
 #include "include/mtkahypartypes.h"
 
@@ -122,8 +122,8 @@ class NLevelCoarsener : public ICoarsener,
     const Context& _context;
     HypernodeID _initial_num_nodes;
     HypernodeID _current_num_nodes;
-    tbb::enumerable_thread_specific<HypernodeID> _contracted_nodes;
-    tbb::enumerable_thread_specific<HypernodeID> _num_nodes_update_threshold;
+    tbb_kahypar::enumerable_thread_specific<HypernodeID> _contracted_nodes;
+    tbb_kahypar::enumerable_thread_specific<HypernodeID> _num_nodes_update_threshold;
   };
 
   static constexpr bool debug = false;
@@ -147,9 +147,9 @@ class NLevelCoarsener : public ICoarsener,
     _progress_bar(utils::cast<Hypergraph>(hypergraph).initialNumNodes(), 0, false),
     _enable_randomization(true) {
     _progress_bar += _hg.numRemovedHypernodes();
-    tbb::parallel_invoke([&] {
+    tbb_kahypar::parallel_invoke([&] {
       _current_vertices.resize(_hg.initialNumNodes());
-      tbb::parallel_for(ID(0), _hg.initialNumNodes(), [&](const HypernodeID hn) {
+      tbb_kahypar::parallel_for(ID(0), _hg.initialNumNodes(), [&](const HypernodeID hn) {
         _current_vertices[hn] = hn;
       });
       utils::Randomize::instance().parallelShuffleVector(_current_vertices, UL(0), _current_vertices.size());
@@ -227,7 +227,7 @@ class NLevelCoarsener : public ICoarsener,
 
   template<bool has_fixed_vertices>
   void performClustering(const HypernodeID contraction_limit) {
-    tbb::parallel_for(UL(0), _current_vertices.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), _current_vertices.size(), [&](const size_t i) {
       if ( _cl_tracker.currentNumNodes() > contraction_limit ) {
         const HypernodeID& hn = _current_vertices[i];
         const HypernodeID num_contractions = contract<has_fixed_vertices>(hn);
@@ -291,7 +291,7 @@ class NLevelCoarsener : public ICoarsener,
   void compactifyVertices() {
     // Mark all vertices that are still enabled
     const HypernodeID current_num_nodes = _cl_tracker.currentNumNodes();
-    tbb::parallel_for(UL(0), _current_vertices.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), _current_vertices.size(), [&](const size_t i) {
       const HypernodeID hn = _current_vertices[i];
       _enabled_vertex_flag_array[i] = _hg.nodeIsEnabled(hn);
     });
@@ -299,13 +299,13 @@ class NLevelCoarsener : public ICoarsener,
     // Calculate prefix sum over all enabled vertices to determine their new position
     // in _current_vertices
     parallel::TBBPrefixSum<size_t> active_vertex_prefix_sum(_enabled_vertex_flag_array);
-    tbb::parallel_scan(tbb::blocked_range<size_t>(
+    tbb_kahypar::parallel_scan(tbb_kahypar::blocked_range<size_t>(
       UL(0), _enabled_vertex_flag_array.size()), active_vertex_prefix_sum);
     ASSERT(active_vertex_prefix_sum.total_sum() == static_cast<size_t>(current_num_nodes));
 
     // Write all enabled vertices to _tmp_current_vertices
     _tmp_current_vertices.resize(current_num_nodes);
-    tbb::parallel_for(UL(0), _current_vertices.size(), [&](const size_t i) {
+    tbb_kahypar::parallel_for(UL(0), _current_vertices.size(), [&](const size_t i) {
       const HypernodeID hn = _current_vertices[i];
       if ( _hg.nodeIsEnabled(hn) ) {
         const size_t pos = active_vertex_prefix_sum[i];
