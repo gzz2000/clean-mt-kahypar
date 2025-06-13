@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       CI_ACTIVE : 1
-      TBB_INSTALL_DIR: /tmp/tbb_build
 
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +19,8 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          sudo apt-get install libtbb-dev libhwloc-dev libboost-program-options-dev
+          sudo apt-get update
+          sudo apt-get install libhwloc-dev
           python3 -m pip install cibuildwheel>=2.22.0
 
       - name: Build Python Wheels
@@ -29,7 +29,7 @@ jobs:
           CIBW_BUILD: cp3*-manylinux*
         run: |
           # run cmake to create pyproject.toml from pyproject.toml.in
-          cmake -B configure_python --preset=minimal -DKAHYPAR_SETUP_PYTHON=On -DKAHYPAR_TBB_DIR=$TBB_INSTALL_DIR -DKAHYPAR_DISABLE_HWLOC=Off
+          cmake -B configure_python --preset=minimal -DKAHYPAR_SETUP_PYTHON=On -DKAHYPAR_DISABLE_HWLOC=Off
           rm -rf configure_python
           python3 -m cibuildwheel --output-dir wheels
 
@@ -47,7 +47,6 @@ jobs:
   #   runs-on: ubuntu-24.04-arm
   #   env:
   #     CI_ACTIVE : 1
-  #     TBB_INSTALL_DIR: /tmp/tbb_build
 
   #   steps:
   #     - uses: actions/checkout@v4
@@ -55,7 +54,7 @@ jobs:
 
   #     - name: Install Dependencies
   #       run: |
-  #         sudo apt-get install libtbb-dev libhwloc-dev libboost-program-options-dev
+  #         sudo apt-get install libhwloc-dev
   #         python3 -m pip install cibuildwheel>=2.22.0
 
   #     - name: Build Python Wheels
@@ -64,7 +63,7 @@ jobs:
   #         CIBW_BUILD: cp3*-manylinux*
   #       run: |
   #         # run cmake to create pyproject.toml from pyproject.toml.in
-  #         cmake -B configure_python --preset=minimal -DKAHYPAR_SETUP_PYTHON=On -DKAHYPAR_TBB_DIR=$TBB_INSTALL_DIR -DKAHYPAR_DISABLE_HWLOC=Off
+  #         cmake -B configure_python --preset=minimal -DKAHYPAR_SETUP_PYTHON=On -DKAHYPAR_DISABLE_HWLOC=Off
   #         rm -rf configure_python
   #         python3 -m cibuildwheel --output-dir wheels
 
@@ -80,7 +79,6 @@ jobs:
     runs-on: macos-latest
     env:
       CI_ACTIVE : 1
-      TBB_INSTALL_DIR: /tmp/tbb_build
 
     steps:
       - uses: actions/checkout@v4
@@ -88,7 +86,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          brew install tbb boost pipx
+          brew install pipx
 
       - name: Build Python Wheels
         env:
@@ -98,7 +96,7 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: 10.13
         run: |
           # run cmake to create pyproject.toml from pyproject.toml.in
-          cmake -B configure_python --preset=minimal -DKAHYPAR_SETUP_PYTHON=On -DKAHYPAR_TBB_DIR=$TBB_INSTALL_DIR -DKAHYPAR_DISABLE_HWLOC=On
+          cmake -B configure_python --preset=minimal -DKAHYPAR_SETUP_PYTHON=On -DKAHYPAR_DISABLE_HWLOC=On
           rm -rf configure_python
           pipx run cibuildwheel --output-dir wheels
 
@@ -116,12 +114,13 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          sudo apt-get install libtbb-dev libhwloc-dev libboost-program-options-dev
+          sudo apt-get update
+          sudo apt-get install libhwloc-dev
 
       - name: Build sdist
         run: |
           # run cmake to create pyproject.toml from pyproject.toml.in
-          cmake -B configure_python --preset=minimal -DKAHYPAR_SETUP_PYTHON=On -DKAHYPAR_TBB_DIR=$TBB_INSTALL_DIR -DKAHYPAR_DISABLE_HWLOC=Off
+          cmake -B configure_python --preset=minimal -DKAHYPAR_SETUP_PYTHON=On -DKAHYPAR_DISABLE_HWLOC=Off
           rm -rf configure_python
           pipx run build --sdist
 

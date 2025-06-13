@@ -47,6 +47,11 @@
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     #endif
+
+#ifndef _XOPEN_SOURCE
+#define _XOPEN_SOURCE
+#endif
+
 #endif // __APPLE__
 
 #include <ucontext.h>
