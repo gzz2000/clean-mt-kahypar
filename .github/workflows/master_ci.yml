@@ -210,7 +210,7 @@ jobs:
       - name: Install CMake and GCC
         shell: msys2 {0}
         run: |
-          pacman --noconfirm -S mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc
+          pacman --noconfirm -S mingw-w64-x86_64-hwloc mingw-w64-x86_64-cmake mingw-w64-x86_64-gcc
 
       - name: Put MSYS2_MinGW64 on Path
         run: |
